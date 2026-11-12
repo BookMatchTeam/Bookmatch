@@ -1,0 +1,19 @@
+# Producao do frontend na VPS (~/bookmatch-frontend).
+# Este arquivo e reenviado pelo CD a cada deploy: nao edite direto na VPS.
+name: bookmatch-frontend
+
+services:
+  web:
+    image: ghcr.io/bookmatchteam/bookmatch-frontend:${IMAGE_TAG:?defina IMAGE_TAG (o deploy.sh faz isso)}
+    restart: unless-stopped
+    # Nenhuma porta publicada: so o Caddy de borda (do backend) alcanca o frontend,
+    # pela rede compartilhada "bookmatch-edge", usando o nome "bookmatch-frontend".
+    networks:
+      edge:
+        aliases:
+          - bookmatch-frontend
+
+networks:
+  edge:
+    external: true
+    name: bookmatch-edge
