@@ -79,7 +79,6 @@ export function SignUpPage() {
 
   return (
     <div className={`auth-screen auth-signup ${isDark ? 'auth-dark' : 'auth-light'} min-h-svh [font-family:Arial,sans-serif]`}>
-      <AuthThemeToggle theme={theme} onToggle={() => setTheme(isDark ? 'light' : 'dark')} />
       <div className="auth-page mx-auto min-h-[1638px] w-full max-w-[390px] overflow-hidden px-[18px] shadow-[0_0_40px_rgba(20,54,74,0.06)]">
         <header className="mx-[-18px] flex h-[87px] items-center justify-between border-b border-[#c3d6df] bg-[#f9fcfe] px-5 py-2">
           <Link
@@ -131,9 +130,10 @@ export function SignUpPage() {
         />
 
         <form
-          className="rounded-[13px] border border-[#c5d6e0] bg-white px-3.5 py-[18px] shadow-[0_3px_9px_rgba(23,63,80,0.06)]"
+          className="relative rounded-[13px] border border-[#c5d6e0] bg-white px-3.5 py-[18px] shadow-[0_3px_9px_rgba(23,63,80,0.06)]"
           onSubmit={handleSubmit}
         >
+          <AuthThemeToggle theme={theme} onToggle={() => setTheme(isDark ? 'light' : 'dark')} />
           <h2 className="mt-[7px] mb-3 text-[23px] font-bold tracking-[-0.6px]">
             Crie sua conta
           </h2>

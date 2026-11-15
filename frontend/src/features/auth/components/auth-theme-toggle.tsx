@@ -19,7 +19,6 @@ export function AuthThemeToggle({
       title={`Ativar modo ${isDark ? 'claro' : 'escuro'}`}
     >
       {isDark ? <Sun aria-hidden="true" /> : <Moon aria-hidden="true" />}
-      <span>{isDark ? 'Modo claro' : 'Modo escuro'}</span>
     </button>
   )
 }

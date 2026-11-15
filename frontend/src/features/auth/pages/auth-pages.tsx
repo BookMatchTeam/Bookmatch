@@ -24,7 +24,6 @@ export function SignInPage() {
 
   return (
     <div className={`auth-screen ${isDark ? 'auth-dark' : 'auth-light'} relative min-h-svh overflow-hidden [font-family:Arial,sans-serif]`}>
-      <AuthThemeToggle theme={theme} onToggle={() => setTheme(isDark ? 'light' : 'dark')} />
       <div className="relative mx-auto min-h-[876px] w-full max-w-[375px] overflow-hidden px-4 pt-[97px] sm:px-6">
         <img
           className="pointer-events-none absolute top-[9px] left-1/2 z-20 h-[119px] w-[146px] -translate-x-1/2 select-none"
@@ -44,6 +43,7 @@ export function SignInPage() {
         />
 
         <section className="auth-panel relative z-10 mx-auto min-h-[724px] w-full max-w-[327px] rounded-[36px] px-[27px] pt-[57px] pb-10 shadow-[0_13px_30px_rgba(0,22,35,0.05)]">
+          <AuthThemeToggle theme={theme} onToggle={() => setTheme(isDark ? 'light' : 'dark')} />
           <p className="m-0 whitespace-nowrap text-[14.5px] tracking-[-0.25px] max-[350px]:text-[13px]">
             Olá, seja bem vindo ao{' '}
             <strong className="font-extrabold text-[#936218] italic">
@@ -201,7 +201,6 @@ export function RecoverPasswordPage() {
 
   return (
     <div className={`auth-screen ${isDark ? 'auth-dark' : 'auth-light'} relative min-h-svh overflow-hidden [font-family:Arial,sans-serif]`}>
-      <AuthThemeToggle theme={theme} onToggle={() => setTheme(isDark ? 'light' : 'dark')} />
       <div className="relative mx-auto min-h-[876px] w-full max-w-[375px] overflow-hidden px-4 pt-[97px] sm:px-6">
         <img
           className="pointer-events-none absolute top-[9px] left-1/2 z-20 h-[119px] w-[146px] -translate-x-1/2 select-none"
@@ -220,6 +219,7 @@ export function RecoverPasswordPage() {
         />
 
         <section className="auth-panel relative z-10 mx-auto min-h-[724px] w-full max-w-[327px] rounded-[36px] px-[27px] pt-[54px] pb-10 shadow-[0_13px_30px_rgba(0,0,0,0.12)]">
+          <AuthThemeToggle theme={theme} onToggle={() => setTheme(isDark ? 'light' : 'dark')} />
           <p className="m-0 text-[12px] font-semibold tracking-[0.04em] text-[#087e93] uppercase">
             Vamos recuperar seu acesso
           </p>
