@@ -36,6 +36,27 @@ jobs:
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
           sparse-checkout: infra/edge
 
+      - name: Conferir secrets da VPS
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          faltando=""
+          for nome in VPS_HOST VPS_PORT VPS_USER VPS_SSH_KEY VPS_KNOWN_HOSTS; do
+            [ -n "${!nome}" ] || faltando="$faltando $nome"
+          done
+          if [ -n "$faltando" ]; then
+            echo "::error::Secrets nao configurados:$faltando (Settings > Secrets and variables > Actions)."
+            exit 1
+          fi
+          if ! [[ "$VPS_PORT" =~ ^[0-9]+$ ]]; then
+            echo "::error::VPS_PORT deve ser so o numero da porta do SSH (ex.: 22)."
+            exit 1
+          fi
+
       - name: Configurar SSH
         run: |
           install -m 700 -d ~/.ssh
@@ -46,7 +67,7 @@ jobs:
           Host vps
             HostName ${{ secrets.VPS_HOST }}
             User ${{ secrets.VPS_USER }}
-            Port ${{ secrets.VPS_PORT || 22 }}
+            Port ${{ secrets.VPS_PORT }}
             IdentityFile ~/.ssh/id_deploy
             IdentitiesOnly yes
             StrictHostKeyChecking yes

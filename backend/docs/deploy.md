@@ -308,10 +308,13 @@ para o backend, o frontend e o Caddy de borda):
 | Nome              | Valor                                                     |
 | ----------------- | --------------------------------------------------------- |
 | `VPS_HOST`        | `187.41.123.210`                                          |
+| `VPS_PORT`        | porta do SSH na VPS (padrao: `22`)                        |
 | `VPS_USER`        | `deploy`                                                  |
 | `VPS_SSH_KEY`     | o conteudo da chave privada, de `BEGIN` ate `END`         |
-| `VPS_KNOWN_HOSTS` | saida de `ssh-keyscan -H 187.41.123.210` (confira a impressao digital) |
-| `VPS_PORT`        | opcional; so se o SSH nao estiver na porta 22             |
+| `VPS_KNOWN_HOSTS` | saida de `ssh-keyscan -p <porta> -H 187.41.123.210` (confira a impressao digital) |
+
+Os cinco sao obrigatorios: sem algum deles, o CD falha no passo "Conferir
+secrets da VPS" dizendo qual falta.
 
 ---
 
