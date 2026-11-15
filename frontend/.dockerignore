@@ -6,3 +6,4 @@ Dockerfile
 *.local
 *.log
 .env*
+!.env.production
