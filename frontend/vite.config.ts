@@ -23,8 +23,8 @@ export default defineConfig({
         start_url: '/',
         scope: '/',
         display: 'standalone',
-        background_color: '#faf8f3',
-        theme_color: '#faf8f3',
+        background_color: '#ffffff',
+        theme_color: '#ffffff',
         categories: ['books', 'social'],
         icons: [
           {

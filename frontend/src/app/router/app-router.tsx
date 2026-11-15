@@ -4,15 +4,6 @@ import { AuthenticatedLayout } from '@/app/router/layouts/authenticated-layout'
 import { PublicLayout } from '@/app/router/layouts/public-layout'
 import { NotFoundPage } from '@/app/router/not-found-page'
 import { paths } from '@/app/router/paths'
-import {
-  RecoverPasswordPage,
-  SignInPage,
-  SignUpPage,
-} from '@/features/auth/pages/auth-pages'
-import { MessagesPage } from '@/features/chat/pages/messages-page'
-import { DiscoveryPage } from '@/features/discovery/pages/discovery-page'
-import { MatchesPage } from '@/features/matches/pages/matches-page'
-import { ProfilePage } from '@/features/profile/pages/profile-page'
 
 export const appRouter = createBrowserRouter([
   {
@@ -24,15 +15,33 @@ export const appRouter = createBrowserRouter([
       },
       {
         path: paths.signIn,
-        Component: SignInPage,
+        lazy: async () => {
+          const { SignInPage } = await import(
+            '@/features/auth/pages/auth-pages'
+          )
+
+          return { Component: SignInPage }
+        },
       },
       {
         path: paths.signUp,
-        Component: SignUpPage,
+        lazy: async () => {
+          const { SignUpPage } = await import(
+            '@/features/auth/pages/auth-pages'
+          )
+
+          return { Component: SignUpPage }
+        },
       },
       {
         path: paths.recoverPassword,
-        Component: RecoverPasswordPage,
+        lazy: async () => {
+          const { RecoverPasswordPage } = await import(
+            '@/features/auth/pages/auth-pages'
+          )
+
+          return { Component: RecoverPasswordPage }
+        },
       },
     ],
   },
@@ -41,19 +50,43 @@ export const appRouter = createBrowserRouter([
     children: [
       {
         path: paths.discovery,
-        Component: DiscoveryPage,
+        lazy: async () => {
+          const { DiscoveryPage } = await import(
+            '@/features/discovery/pages/discovery-page'
+          )
+
+          return { Component: DiscoveryPage }
+        },
       },
       {
         path: paths.matches,
-        Component: MatchesPage,
+        lazy: async () => {
+          const { MatchesPage } = await import(
+            '@/features/matches/pages/matches-page'
+          )
+
+          return { Component: MatchesPage }
+        },
       },
       {
         path: paths.messages,
-        Component: MessagesPage,
+        lazy: async () => {
+          const { MessagesPage } = await import(
+            '@/features/chat/pages/messages-page'
+          )
+
+          return { Component: MessagesPage }
+        },
       },
       {
         path: paths.profile,
-        Component: ProfilePage,
+        lazy: async () => {
+          const { ProfilePage } = await import(
+            '@/features/profile/pages/profile-page'
+          )
+
+          return { Component: ProfilePage }
+        },
       },
     ],
   },

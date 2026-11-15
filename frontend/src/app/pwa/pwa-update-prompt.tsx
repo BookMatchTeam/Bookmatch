@@ -2,8 +2,45 @@ import { useRegisterSW } from 'virtual:pwa-register/react'
 
 import { Button } from '@/components/ui/button'
 
+const updateIntervalMs = 60 * 60 * 1000
+let updateIntervalId: number | undefined
+
 function reportRegistrationError(error: unknown) {
   console.error('Não foi possível registrar o service worker.', error)
+}
+
+function schedulePeriodicUpdate(
+  serviceWorkerUrl: string,
+  registration: ServiceWorkerRegistration | undefined,
+) {
+  if (!registration) {
+    return
+  }
+
+  if (updateIntervalId) {
+    window.clearInterval(updateIntervalId)
+  }
+
+  updateIntervalId = window.setInterval(async () => {
+    if (registration.installing || !navigator.onLine) {
+      return
+    }
+
+    try {
+      const response = await fetch(serviceWorkerUrl, {
+        cache: 'no-store',
+        headers: {
+          'cache-control': 'no-cache',
+        },
+      })
+
+      if (response.ok) {
+        await registration.update()
+      }
+    } catch (error) {
+      console.error('Não foi possível procurar atualizações do aplicativo.', error)
+    }
+  }, updateIntervalMs)
 }
 
 export function PwaUpdatePrompt() {
@@ -11,6 +48,7 @@ export function PwaUpdatePrompt() {
     needRefresh: [needRefresh, setNeedRefresh],
     updateServiceWorker,
   } = useRegisterSW({
+    onRegisteredSW: schedulePeriodicUpdate,
     onRegisterError: reportRegistrationError,
   })
 

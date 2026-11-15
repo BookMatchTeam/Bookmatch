@@ -13,6 +13,7 @@ Este documento organiza a fundação técnica do frontend do BookMatch. A aplica
 - `fetch` nativo para comunicação HTTP inicialmente.
 - Sem Redux ou Zustand até existir uma necessidade concreta.
 - Nenhuma resposta da API ou informação sensível será armazenada pelo service worker.
+- A sessão será mantida pelo backend em cookie HttpOnly; o frontend não armazenará tokens em `localStorage` ou `sessionStorage`.
 
 ## Etapa 1 — Fundação visual
 
@@ -39,6 +40,7 @@ Status: concluída.
 - [x] Armazenar somente os arquivos estáticos da interface.
 - [x] Impedir cache de autenticação, perfis, matches, mensagens e API.
 - [x] Exibir um aviso antes de aplicar uma nova versão da aplicação.
+- [x] Procurar uma nova versão do service worker a cada hora enquanto o aplicativo estiver aberto.
 - [x] Exibir o estado sem conexão sem prometer funcionamento offline.
 
 Os ícones oficiais incluem versões de 192 px, 512 px, `maskable` e Apple Touch. O arquivo `bookmatch-sidebar.svg` é usado como favicone vetorial da aplicação.
@@ -52,6 +54,7 @@ Status: concluída.
 - [x] Configurar o TanStack Query.
 - [x] Criar layouts público e autenticado.
 - [x] Criar páginas provisórias e uma rota não encontrada.
+- [x] Carregar as páginas de cada feature sob demanda.
 - [x] Criar as pastas somente quando a primeira implementação exigir.
 
 As rotas públicas são `/entrar`, `/criar-conta` e `/recuperar-senha`. As rotas `/descobrir`, `/matches`, `/mensagens` e `/perfil` compartilham o layout autenticado. A proteção por sessão será adicionada durante a implementação da autenticação; nesta etapa, o layout apenas organiza a navegação e a composição visual.
@@ -88,7 +91,9 @@ Status: não iniciada.
 - [ ] Documentar e validar `VITE_API_URL`.
 - [ ] Criar um cliente HTTP centralizado sobre o `fetch`.
 - [ ] Padronizar respostas e erros.
-- [ ] Preparar o envio seguro das credenciais de autenticação.
+- [ ] Definir `retry` e `staleTime` do TanStack Query conforme os erros da API.
+- [ ] Configurar o envio do cookie HttpOnly com `credentials: 'include'`.
+- [ ] Definir com o backend a política de `SameSite`, `Secure` e proteção contra CSRF.
 - [ ] Integrar o estado de conectividade às requisições.
 
 ## Etapa 5 — Primeiro fluxo do produto
@@ -102,6 +107,8 @@ Entrar → Criar conta → Montar perfil → Escolher preferências → Descober
 ```
 
 A tela de descoberta será tratada como a experiência central do produto, mas será construída depois que o usuário puder criar um perfil mínimo.
+
+Quando a sessão estiver integrada, as rotas do layout autenticado deverão exigir uma sessão válida. A rota `/` deverá direcionar usuários autenticados para `/descobrir` e os demais para `/entrar`.
 
 ## Critérios gerais
 
