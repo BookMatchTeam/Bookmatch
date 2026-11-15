@@ -434,7 +434,8 @@ do banco (`bookmatch-prod_mariadb_data`) e reaproveitado.
      de borda. A API fica fora do ar so durante essa troca e a emissao do
      certificado (segundos).
 3. Confira `curl -sS https://api-bookmatch.galpao.tech/health`.
-4. So entao limpe o que sobrou do formato antigo:
+4. So entao limpe o que sobrou do formato antigo (passo a passo completo em
+   [`docs/TODO-manutencao-vps.md`](../../docs/TODO-manutencao-vps.md)):
    - `rm -r ~/bookmatch/deploy` (Caddyfile e deploy.sh velhos; o novo
      deploy.sh fica direto em `~/bookmatch`);
    - as imagens antigas: `docker image ls 'ghcr.io/rotiivv/*'` e
