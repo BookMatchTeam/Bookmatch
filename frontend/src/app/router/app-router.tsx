@@ -26,9 +26,7 @@ export const appRouter = createBrowserRouter([
       {
         path: paths.signUp,
         lazy: async () => {
-          const { SignUpPage } = await import(
-            '@/features/auth/pages/auth-pages'
-          )
+          const { SignUpPage } = await import('@/features/auth/pages/sign-up-page')
 
           return { Component: SignUpPage }
         },
