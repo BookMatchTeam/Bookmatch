@@ -1,0 +1,109 @@
+# Producao do backend na VPS (~/bookmatch).
+# Este arquivo e reenviado pelo CD a cada deploy: nao edite direto na VPS.
+#
+# Servicos:
+# - api:     a aplicacao, imagem pronta baixada do GHCR.
+# - mariadb: o banco, acessivel apenas pela rede interna deste projeto.
+# - migrate: tarefa avulsa que aplica as migrations do Prisma. Nao fica
+#            rodando; e executada pelo deploy.sh a cada deploy.
+#
+# HTTPS e dominio NAO ficam aqui: quem recebe a internet e o Caddy de borda
+# (infra/edge), que alcanca a API pela rede compartilhada "bookmatch-edge",
+# usando o nome "bookmatch-backend".
+#
+# Os valores vem do arquivo .env ao lado deste arquivo, na VPS
+# (modelo em env.production.example).
+#
+# IMAGE_TAG e o commit publicado. Quem informa e o deploy.sh, chamado pelo
+# workflow de CD. Sem ele, comandos como "ps" e "logs" funcionam, mas um "up"
+# falha ao procurar a imagem "defina-IMAGE_TAG", em vez de publicar algo por
+# engano.
+#
+# Este arquivo nao monta imagens. No CI, o smoke test junta o
+# compose.build.yaml, que acrescenta os "build:".
+
+# O nome do projeto continua "bookmatch-prod" (o mesmo de antes da ida para o
+# monorepo): o volume do banco e "bookmatch-prod_mariadb_data". Trocar este
+# nome faria o Compose criar um banco novo e vazio.
+name: bookmatch-prod
+
+# Limita os logs de cada container a 3 arquivos de 10 MB. Sem isso, o Docker
+# guarda os logs sem limite e eles podem encher o disco da VPS.
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  api:
+    image: ghcr.io/bookmatchteam/bookmatch-backend:${IMAGE_TAG:-defina-IMAGE_TAG}
+    logging: *logging
+    restart: unless-stopped
+    environment:
+      PORT: 3000
+      DATABASE_HOST: mariadb
+      DATABASE_PORT: 3306
+      DATABASE_USER: ${MARIADB_USER:?defina MARIADB_USER no .env}
+      DATABASE_PASSWORD: ${MARIADB_PASSWORD:?defina MARIADB_PASSWORD no .env}
+      DATABASE_NAME: ${MARIADB_DATABASE:?defina MARIADB_DATABASE no .env}
+    # Sem "ports": a API so e alcancada pelo Caddy de borda, pela rede "edge".
+    networks:
+      default:
+      edge:
+        aliases:
+          - bookmatch-backend
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://localhost:3000/health').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    depends_on:
+      mariadb:
+        condition: service_healthy
+
+  mariadb:
+    image: mariadb:11.8.9
+    logging: *logging
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: ${MARIADB_DATABASE:?defina MARIADB_DATABASE no .env}
+      MARIADB_USER: ${MARIADB_USER:?defina MARIADB_USER no .env}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD:?defina MARIADB_PASSWORD no .env}
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:?defina MARIADB_ROOT_PASSWORD no .env}
+    # Sem "ports" e fora da rede "edge": so a API e o migrate alcancam o banco.
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  migrate:
+    # So a CLI do Prisma, o schema e as migrations (estagio migrate do Dockerfile).
+    image: ghcr.io/bookmatchteam/bookmatch-backend-migrate:${IMAGE_TAG:-defina-IMAGE_TAG}
+    environment:
+      DATABASE_URL: mysql://${MARIADB_USER}:${MARIADB_PASSWORD}@mariadb:3306/${MARIADB_DATABASE}
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    profiles: ["tools"]
+
+volumes:
+  mariadb_data:
+
+networks:
+  # Rede compartilhada com o Caddy de borda e o frontend. Criada pelo deploy.sh
+  # (de quem chegar primeiro). O smoke test troca o nome por uma rede propria.
+  edge:
+    external: true
+    name: ${EDGE_NETWORK:-bookmatch-edge}

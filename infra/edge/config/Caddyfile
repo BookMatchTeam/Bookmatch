@@ -1,0 +1,25 @@
+# Caddy de borda: o unico container com portas abertas na VPS (80/443).
+#
+# Obtem e renova sozinho os certificados HTTPS (Let's Encrypt), redireciona
+# HTTP para HTTPS e repassa cada dominio para o servico certo, pela rede
+# Docker compartilhada "bookmatch-edge". Cada servico entra nessa rede com um
+# nome fixo, definido no compose.prod.yaml dele:
+#   - bookmatch-backend:3000  (backend/deploy/compose.prod.yaml)
+#   - bookmatch-frontend:80   (frontend/deploy/compose.prod.yaml)
+#
+# Se um servico ainda nao subiu, o Caddy responde 502 para aquele dominio e
+# volta ao normal sozinho quando ele aparecer.
+#
+# Mudancas aqui sao aplicadas pelo "Edge CD" com "caddy reload" (sem derrubar
+# conexoes).
+
+# API
+api-bookmatch.galpao.tech {
+	encode zstd gzip
+	reverse_proxy bookmatch-backend:3000
+}
+
+# Frontend (o Caddy de dentro da imagem do frontend serve os arquivos)
+bookmatch.galpao.tech {
+	reverse_proxy bookmatch-frontend:80
+}

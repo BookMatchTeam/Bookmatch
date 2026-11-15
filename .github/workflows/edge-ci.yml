@@ -1,0 +1,53 @@
+name: Edge CI
+
+on:
+  pull_request:
+    paths:
+      - "infra/edge/**"
+      - ".github/workflows/edge-*.yml"
+  push:
+    branches: [main]
+    paths:
+      - "infra/edge/**"
+      - ".github/workflows/edge-*.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: edge-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: infra/edge
+
+jobs:
+  validar:
+    name: Validar Caddyfile e compose
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Compose valido
+        run: docker compose -f compose.prod.yaml config --quiet
+
+      - name: Caddyfile valido
+        # Mesma imagem e mesmo comando que o deploy.sh usa na VPS.
+        run: |
+          image=$(docker compose -f compose.prod.yaml config --images)
+          docker run --rm -v "$PWD/config:/etc/caddy:ro" "$image" \
+            caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+
+      - name: Caddyfile formatado
+        run: |
+          image=$(docker compose -f compose.prod.yaml config --images)
+          docker run --rm -v "$PWD/config:/etc/caddy:ro" "$image" \
+            caddy fmt /etc/caddy/Caddyfile > /tmp/Caddyfile.fmt
+          if ! diff -u config/Caddyfile /tmp/Caddyfile.fmt; then
+            echo "::error::Caddyfile fora do padrao. Rode 'caddy fmt --overwrite' em infra/edge/config/Caddyfile."
+            exit 1
+          fi
+
+      - name: Sintaxe do deploy.sh
+        run: bash -n deploy.sh
