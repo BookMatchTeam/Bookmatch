@@ -25,7 +25,7 @@ e manda a VPS baixar essa versao via SSH. Nada e compilado na VPS.
 ## Como o trafego chega no frontend
 
 ```
-navegador ──HTTPS──▶ Caddy de borda (container do backend, portas 80/443, certificados)
+navegador ──HTTPS──▶ Caddy de borda (infra/edge, portas 80/443, certificados)
                        ├ api-bookmatch.galpao.tech ──▶ api
                        └ bookmatch.galpao.tech     ──▶ bookmatch-frontend:80   (rede "bookmatch-edge")
                                                          └ Caddy interno: serve o dist/ estatico
@@ -64,49 +64,20 @@ Registro **A** `bookmatch.galpao.tech` → IP da VPS (o mesmo da API).
 | `VPS_HOST` | IP ou nome da VPS |
 | `VPS_PORT` | Porta do SSH na VPS (normalmente `22`) |
 | `VPS_USER` | `deploy` |
-| `VPS_SSH_KEY` | Chave **privada** SSH que entra como `deploy` (pode ser a mesma do backend) |
+| `VPS_SSH_KEY` | Chave **privada** SSH que entra como `deploy` (o mesmo secret usado pelo backend e pelo edge) |
 
 Os quatro sao obrigatorios: sem algum deles, o CD falha no passo "Conferir secrets da VPS"
 dizendo qual falta. A identidade da VPS e lida pelo CD a cada deploy (`ssh-keyscan`), sem secret proprio.
 
-### 3. Mudanca no repositorio do backend (`Rotiivv/bookmatch-backend`)
+### 3. Caddy de borda
 
-O Caddy de borda mora no backend, entao ele precisa conhecer o novo dominio e entrar na rede compartilhada.
-Tres ajustes, via branch → PR → merge (o CD do backend aplica):
+Nada a fazer no frontend. O dominio `bookmatch.galpao.tech` ja esta no Caddy de borda
+(`infra/edge/config/Caddyfile`, que vem com a branch `chore/backend-setup`), apontando para
+`bookmatch-frontend:80` na rede `bookmatch-edge`. Para mudar dominio ou rota, edite esse
+arquivo: o **Edge CD** aplica com `caddy reload`. Detalhes em `infra/edge/README.md`.
 
-**`deploy/Caddyfile`** — novo bloco:
-
-```caddyfile
-bookmatch.galpao.tech {
-	reverse_proxy bookmatch-frontend:80
-}
-```
-
-**`compose.prod.yaml`** — o servico `caddy` entra tambem na rede `bookmatch-edge`
-(mantenha as redes que ele ja usa; se ele nao declara nenhuma, ele esta na `default`):
-
-```yaml
-services:
-  caddy:
-    # ...o que ja existe...
-    networks:
-      - default
-      - edge
-
-networks:
-  edge:
-    external: true
-    name: bookmatch-edge
-```
-
-**`deploy/deploy.sh`** — antes do `docker compose up`, garantir que a rede existe
-(quem fizer deploy primeiro, frontend ou backend, cria):
-
-```bash
-docker network inspect bookmatch-edge >/dev/null 2>&1 || docker network create bookmatch-edge
-```
-
-Quando o backend vier para este repositorio, isso vira um compose so e a rede compartilhada deixa de ser necessaria.
+Enquanto o frontend nao subir, o Caddy responde 502 para esse dominio; quando ele subir,
+volta ao normal sozinho, sem redeploy do Caddy.
 
 ### 4. GHCR
 

@@ -6,7 +6,7 @@ services:
   web:
     image: ghcr.io/bookmatchteam/bookmatch-frontend:${IMAGE_TAG:?defina IMAGE_TAG (o deploy.sh faz isso)}
     restart: unless-stopped
-    # Nenhuma porta publicada: so o Caddy de borda (do backend) alcanca o frontend,
+    # Nenhuma porta publicada: so o Caddy de borda (infra/edge) alcanca o frontend,
     # pela rede compartilhada "bookmatch-edge", usando o nome "bookmatch-frontend".
     networks:
       edge:

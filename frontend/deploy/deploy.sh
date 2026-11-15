@@ -12,7 +12,7 @@ compose() { docker compose -f compose.prod.yaml "$@"; }
 
 echo "==> Frontend: versao ${IMAGE_TAG}"
 
-# Rede compartilhada com o Caddy de borda. Quem chegar primeiro (frontend ou backend) cria.
+# Rede compartilhada com o Caddy de borda e o backend. Quem chegar primeiro (frontend, backend ou edge) cria.
 if ! docker network inspect bookmatch-edge >/dev/null 2>&1; then
   echo "==> Criando a rede bookmatch-edge"
   docker network create bookmatch-edge

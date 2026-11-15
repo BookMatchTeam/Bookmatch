@@ -1,5 +1,5 @@
 # Caddy DENTRO do container do frontend: so serve os arquivos estaticos em HTTP.
-# O HTTPS e o dominio ficam com o Caddy de borda da VPS (o do backend),
+# O HTTPS e o dominio ficam com o Caddy de borda da VPS (infra/edge),
 # que repassa bookmatch.galpao.tech para este container.
 {
 	admin off
