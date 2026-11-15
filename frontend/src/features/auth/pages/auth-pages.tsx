@@ -3,10 +3,16 @@ import { Eye, EyeOff, KeyRound, ShieldCheck } from 'lucide-react'
 import { Link, useNavigate } from 'react-router'
 
 import { paths } from '@/app/router/paths'
+import {
+  AuthThemeToggle,
+} from '@/features/auth/components/auth-theme-toggle'
+import { useAuthTheme } from '@/features/auth/hooks/use-auth-theme'
 
 export function SignInPage() {
   const navigate = useNavigate()
   const [showPassword, setShowPassword] = useState(false)
+  const { theme, setTheme } = useAuthTheme()
+  const isDark = theme === 'dark'
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -17,8 +23,9 @@ export function SignInPage() {
   }
 
   return (
-    <div className="relative min-h-svh overflow-hidden bg-[#e8f7f0] text-[#081c34] [font-family:Arial,sans-serif]">
-      <div className="relative mx-auto min-h-[876px] w-full max-w-[375px] overflow-hidden bg-[#e8f7f0] px-4 pt-[97px] sm:px-6">
+    <div className={`auth-screen ${isDark ? 'auth-dark' : 'auth-light'} relative min-h-svh overflow-hidden [font-family:Arial,sans-serif]`}>
+      <AuthThemeToggle theme={theme} onToggle={() => setTheme(isDark ? 'light' : 'dark')} />
+      <div className="relative mx-auto min-h-[876px] w-full max-w-[375px] overflow-hidden px-4 pt-[97px] sm:px-6">
         <img
           className="pointer-events-none absolute top-[9px] left-1/2 z-20 h-[119px] w-[146px] -translate-x-1/2 select-none"
           src="/brand/bookmatch-full-logo.svg"
@@ -36,7 +43,7 @@ export function SignInPage() {
           aria-hidden="true"
         />
 
-        <section className="relative z-10 mx-auto min-h-[724px] w-full max-w-[327px] rounded-[36px] bg-white px-[27px] pt-[57px] pb-10 shadow-[0_13px_30px_rgba(0,22,35,0.05)]">
+        <section className="auth-panel relative z-10 mx-auto min-h-[724px] w-full max-w-[327px] rounded-[36px] px-[27px] pt-[57px] pb-10 shadow-[0_13px_30px_rgba(0,22,35,0.05)]">
           <p className="m-0 whitespace-nowrap text-[14.5px] tracking-[-0.25px] max-[350px]:text-[13px]">
             Olá, seja bem vindo ao{' '}
             <strong className="font-extrabold text-[#936218] italic">
@@ -181,6 +188,8 @@ function GoogleIcon() {
 
 export function RecoverPasswordPage() {
   const [submitted, setSubmitted] = useState(false)
+  const { theme, setTheme } = useAuthTheme()
+  const isDark = theme === 'dark'
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -191,8 +200,9 @@ export function RecoverPasswordPage() {
   }
 
   return (
-    <div className="relative min-h-svh overflow-hidden bg-[#03223f] text-[#081c34] [font-family:Arial,sans-serif]">
-      <div className="relative mx-auto min-h-[876px] w-full max-w-[375px] overflow-hidden bg-[#03223f] px-4 pt-[97px] sm:px-6">
+    <div className={`auth-screen ${isDark ? 'auth-dark' : 'auth-light'} relative min-h-svh overflow-hidden [font-family:Arial,sans-serif]`}>
+      <AuthThemeToggle theme={theme} onToggle={() => setTheme(isDark ? 'light' : 'dark')} />
+      <div className="relative mx-auto min-h-[876px] w-full max-w-[375px] overflow-hidden px-4 pt-[97px] sm:px-6">
         <img
           className="pointer-events-none absolute top-[9px] left-1/2 z-20 h-[119px] w-[146px] -translate-x-1/2 select-none"
           src="/brand/bookmatch-full-logo.svg"
@@ -209,7 +219,7 @@ export function RecoverPasswordPage() {
           aria-hidden="true"
         />
 
-        <section className="relative z-10 mx-auto min-h-[724px] w-full max-w-[327px] rounded-[36px] bg-white px-[27px] pt-[54px] pb-10 shadow-[0_13px_30px_rgba(0,0,0,0.12)]">
+        <section className="auth-panel relative z-10 mx-auto min-h-[724px] w-full max-w-[327px] rounded-[36px] px-[27px] pt-[54px] pb-10 shadow-[0_13px_30px_rgba(0,0,0,0.12)]">
           <p className="m-0 text-[12px] font-semibold tracking-[0.04em] text-[#087e93] uppercase">
             Vamos recuperar seu acesso
           </p>

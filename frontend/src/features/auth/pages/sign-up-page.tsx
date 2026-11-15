@@ -3,6 +3,8 @@ import { Camera, ShieldCheck } from 'lucide-react'
 import { Link, useNavigate } from 'react-router'
 
 import { paths } from '@/app/router/paths'
+import { AuthThemeToggle } from '@/features/auth/components/auth-theme-toggle'
+import { useAuthTheme } from '@/features/auth/hooks/use-auth-theme'
 
 const brazilianStates = [
   ['AC', 'Acre'],
@@ -41,6 +43,8 @@ export function SignUpPage() {
   const navigate = useNavigate()
   const [photoName, setPhotoName] = useState('')
   const [photoError, setPhotoError] = useState('')
+  const { theme, setTheme } = useAuthTheme()
+  const isDark = theme === 'dark'
 
   function handlePhotoChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
@@ -74,8 +78,9 @@ export function SignUpPage() {
   }
 
   return (
-    <div className="min-h-svh bg-[#edf6f8] text-[#142638] [font-family:Arial,sans-serif]">
-      <div className="mx-auto min-h-[1638px] w-full max-w-[390px] overflow-hidden bg-[#f6fbfe] px-[18px] shadow-[0_0_40px_rgba(20,54,74,0.06)]">
+    <div className={`auth-screen auth-signup ${isDark ? 'auth-dark' : 'auth-light'} min-h-svh [font-family:Arial,sans-serif]`}>
+      <AuthThemeToggle theme={theme} onToggle={() => setTheme(isDark ? 'light' : 'dark')} />
+      <div className="auth-page mx-auto min-h-[1638px] w-full max-w-[390px] overflow-hidden px-[18px] shadow-[0_0_40px_rgba(20,54,74,0.06)]">
         <header className="mx-[-18px] flex h-[87px] items-center justify-between border-b border-[#c3d6df] bg-[#f9fcfe] px-5 py-2">
           <Link
             className="rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0794b1]"
