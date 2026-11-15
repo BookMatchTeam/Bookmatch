@@ -86,15 +86,17 @@ src/
 
 ## Etapa 4 — Infraestrutura da API
 
-Status: não iniciada.
+Status: concluída no frontend; o backend deverá aplicar o contrato ao implementar a autenticação.
 
-- [ ] Documentar e validar `VITE_API_URL`.
-- [ ] Criar um cliente HTTP centralizado sobre o `fetch`.
-- [ ] Padronizar respostas e erros.
-- [ ] Definir `retry` e `staleTime` do TanStack Query conforme os erros da API.
-- [ ] Configurar o envio do cookie HttpOnly com `credentials: 'include'`.
-- [ ] Definir com o backend a política de `SameSite`, `Secure` e proteção contra CSRF.
-- [ ] Integrar o estado de conectividade às requisições.
+- [x] Documentar e validar `VITE_API_URL`.
+- [x] Criar um cliente HTTP centralizado sobre o `fetch`.
+- [x] Padronizar respostas e erros.
+- [x] Definir `retry` e `staleTime` do TanStack Query conforme os erros da API.
+- [x] Configurar o envio do cookie HttpOnly com `credentials: 'include'`.
+- [x] Definir com o backend a política de `SameSite`, `Secure` e proteção contra CSRF.
+- [x] Integrar o estado de conectividade às requisições.
+
+O contrato está em [`docs/contrato-api.md`](contrato-api.md). A infraestrutura não pressupõe endpoints de autenticação que ainda não existem; consulta de sessão e proteção das rotas serão adicionadas quando o backend publicar o contrato real desses endpoints.
 
 ## Etapa 5 — Primeiro fluxo do produto
 
