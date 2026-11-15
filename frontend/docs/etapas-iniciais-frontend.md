@@ -31,15 +31,17 @@ O shadcn/ui foi configurado com Base UI, preset Nova, ícones Lucide e tokens ne
 
 ## Etapa 2 — Fundação PWA
 
-Status: não iniciada.
+Status: em andamento, aguardando os ícones oficiais do BookMatch.
 
-- [ ] Instalar e configurar `vite-plugin-pwa`.
-- [ ] Criar o manifesto com nome, nome curto, cores e modo `standalone`.
-- [ ] Criar ícones temporários de 192 px, 512 px e `maskable`.
-- [ ] Armazenar somente os arquivos estáticos da interface.
-- [ ] Impedir cache de autenticação, perfis, matches, mensagens e API.
-- [ ] Exibir um aviso antes de aplicar uma nova versão da aplicação.
-- [ ] Exibir o estado sem conexão sem prometer funcionamento offline.
+- [x] Instalar e configurar `vite-plugin-pwa`.
+- [x] Criar o manifesto com nome, nome curto, cores e modo `standalone`.
+- [ ] Adicionar os ícones oficiais de 192 px, 512 px e `maskable` quando forem fornecidos.
+- [x] Armazenar somente os arquivos estáticos da interface.
+- [x] Impedir cache de autenticação, perfis, matches, mensagens e API.
+- [x] Exibir um aviso antes de aplicar uma nova versão da aplicação.
+- [x] Exibir o estado sem conexão sem prometer funcionamento offline.
+
+O manifesto permanecerá sem referências a ícones até que os arquivos oficiais sejam adicionados. Assim, nenhum ativo temporário será publicado ou confundido com a identidade final do produto.
 
 ## Etapa 3 — Estrutura da aplicação
 
