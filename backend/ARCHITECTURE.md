@@ -194,6 +194,35 @@ Para preservar a independencia de `application`, casos de uso nao devem receber
 decorators do NestJS. Quando necessario, o modulo pode instancia-los por meio
 de providers com `useFactory`.
 
+## Configuracao
+
+As variaveis de ambiente sao lidas e validadas em um unico lugar,
+`src/config`, durante a subida da aplicacao. Se alguma variavel obrigatoria
+faltar ou estiver invalida, a aplicacao nao sobe e lista todos os problemas
+de uma vez.
+
+```text
+src/config/
+|-- app-config.ts           # tipo AppConfig e token APP_CONFIG
+|-- app-config.module.ts    # modulo global que fornece APP_CONFIG
+|-- environment.ts          # validacao em TypeScript puro
+`-- environment.spec.ts
+```
+
+Regras:
+
+- somente `src/config` le `process.env`;
+- o restante do codigo recebe a configuracao tipada por injecao
+  (`@Inject(APP_CONFIG)`);
+- credenciais e segredos nao possuem valor padrao no codigo;
+- a configuracao e imutavel depois da subida;
+- testes substituem `APP_CONFIG` com `overrideProvider`, sem depender de
+  `.env`.
+
+Casos de uso nao recebem `AppConfig` inteiro. Quando uma regra de negocio
+depender de um valor configuravel, o modulo NestJS repassa somente esse valor
+ao montar o caso de uso.
+
 ## Evolucao arquitetural
 
 Esta arquitetura e um ponto de partida, nao uma estrutura imutavel. Mudancas

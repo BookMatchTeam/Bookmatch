@@ -24,7 +24,7 @@ primeiro adaptador Prisma.
 
 ## Item 1 — Configuração validada no boot
 
-Status: não iniciado.
+Status: concluído.
 
 Problema: o `PrismaService` lê `process.env` diretamente e, quando uma
 variável falta, usa as credenciais de desenvolvimento (`bookmatch_dev`). Em
@@ -34,13 +34,32 @@ Proposta: um módulo de configuração tipado, validado na subida da aplicação
 Se alguma variável obrigatória faltar ou estiver inválida, a aplicação não
 sobe e informa quais variáveis estão com problema.
 
-- [ ] Definir o esquema das variáveis (`PORT`, `DATABASE_*`, `NODE_ENV`).
-- [ ] Validar o esquema na subida e encerrar com erro legível quando falhar.
-- [ ] Expor a configuração tipada por injeção, sem leitura direta de
+- [x] Definir o esquema das variáveis (`PORT` e `DATABASE_*`).
+- [x] Validar o esquema na subida e encerrar com erro legível quando falhar.
+- [x] Expor a configuração tipada por injeção, sem leitura direta de
       `process.env` fora do módulo de configuração.
-- [ ] Remover os valores padrão de credenciais do `PrismaService`.
-- [ ] Atualizar `.env.example` e `deploy/env.production.example`.
-- [ ] Testes unitários da validação (variável ausente, inválida, válida).
+- [x] Remover os valores padrão de credenciais do `PrismaService`.
+- [x] Atualizar `.env.example` e `deploy/env.production.example`.
+- [x] Testes unitários da validação (variável ausente, vazia, inválida,
+      limites de porta, vários problemas juntos, configuração imutável).
+
+Como ficou:
+
+- `src/config/environment.ts`: validação em TypeScript puro. Um leitor
+  acumula os problemas de todas as variáveis e, se houver algum, lança um
+  `ConfigurationValidationError` com a lista completa.
+- `src/config/app-config.ts`: o tipo `AppConfig` e o token `APP_CONFIG`.
+- `src/config/app-config.module.ts`: módulo global que carrega o `.env`,
+  valida o ambiente e fornece `APP_CONFIG` por injeção.
+- Testes e2e substituem `APP_CONFIG` com `overrideProvider`, sem depender de
+  `.env`.
+
+Para adicionar uma variável nova: incluir o campo em `AppConfig`, lê-la em
+`validateEnvironment` com o leitor do tipo certo, cobrir com teste e
+atualizar os dois arquivos de exemplo de ambiente.
+
+`NODE_ENV` ficou de fora porque nada depende dele ainda. Entra quando o
+primeiro comportamento precisar distinguir os ambientes.
 
 ## Item 2 — Tratamento de erros padronizado
 

@@ -4,7 +4,19 @@ import { NodeAdapter } from '@nestjs/platform-node';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { inject } from 'light-my-request';
 import { AppModule } from '../src/app.module.js';
+import { APP_CONFIG, type AppConfig } from '../src/config/app-config.js';
 import { configureApp } from '../src/configure-app.js';
+
+const testConfig: AppConfig = {
+  server: { port: 3000 },
+  database: {
+    host: 'localhost',
+    port: 3306,
+    user: 'bookmatch',
+    password: 'test',
+    name: 'bookmatch',
+  },
+};
 
 const injectionResponseMethods = [
   'setTimeout',
@@ -43,7 +55,10 @@ describe('Health (e2e)', () => {
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    })
+      .overrideProvider(APP_CONFIG)
+      .useValue(testConfig)
+      .compile();
 
     app = moduleFixture.createNestApplication<NestNodeApplication>(
       new NodeAdapter(),
