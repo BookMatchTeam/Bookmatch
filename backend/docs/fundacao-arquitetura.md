@@ -7,7 +7,7 @@ padrão para os casos de uso que vierem depois.
 A arquitetura de referência está em [`ARCHITECTURE.md`](../ARCHITECTURE.md).
 Este documento acompanha a execução: cada item tem status, decisões e tarefas.
 
-Branch de trabalho: `chore/backend-foundation`.
+Branch de trabalho: `chore/backend-fundacao`.
 
 ## Ordem de execução
 
