@@ -1,8 +1,31 @@
-import { Link, Outlet } from 'react-router'
+import { useEffect } from 'react'
+import { Link, Outlet, useLocation } from 'react-router'
 
 import { paths } from '@/app/router/paths'
 
 export function PublicLayout() {
+  const { pathname } = useLocation()
+  const isCustomAuthPage =
+    pathname === paths.signIn || pathname === paths.signUp
+
+  useEffect(() => {
+    const titles: Record<string, string> = {
+      [paths.signIn]: 'Entrar · BookMatch',
+      [paths.signUp]: 'Criar conta · BookMatch',
+      [paths.recoverPassword]: 'Recuperar senha · BookMatch',
+    }
+
+    document.title = titles[pathname] ?? 'BookMatch'
+  }, [pathname])
+
+  if (isCustomAuthPage) {
+    return (
+      <main className="min-h-svh">
+        <Outlet />
+      </main>
+    )
+  }
+
   return (
     <div className="min-h-svh bg-muted/30">
       <header className="border-b bg-background">
