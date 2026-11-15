@@ -62,10 +62,12 @@ Registro **A** `bookmatch.galpao.tech` → IP da VPS (o mesmo da API).
 | Secret | Valor |
 |---|---|
 | `VPS_HOST` | IP ou nome da VPS |
+| `VPS_PORT` | Porta do SSH na VPS (normalmente `22`) |
 | `VPS_USER` | `deploy` |
 | `VPS_SSH_KEY` | Chave **privada** SSH que entra como `deploy` (pode ser a mesma do backend) |
-| `VPS_KNOWN_HOSTS` | Saida de `ssh-keyscan -H <host da VPS>` (confira a impressao digital) |
-| `VPS_PORT` | Opcional. So se o SSH nao estiver na porta 22 |
+
+Os quatro sao obrigatorios: sem algum deles, o CD falha no passo "Conferir secrets da VPS"
+dizendo qual falta. A identidade da VPS e lida pelo CD a cada deploy (`ssh-keyscan`), sem secret proprio.
 
 ### 3. Mudanca no repositorio do backend (`Rotiivv/bookmatch-backend`)
 
