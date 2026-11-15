@@ -41,7 +41,6 @@ navegador ──HTTPS──▶ Caddy de borda (80/443)
 ```
 
 Os serviços se encontram pela rede Docker `bookmatch-edge`. Só o Caddy de borda
-publica portas. Os secrets da VPS (`VPS_HOST`, `VPS_PORT`, `VPS_USER`,
-`VPS_SSH_KEY` e `VPS_KNOWN_HOSTS`, todos obrigatórios) são os mesmos para os
-três CDs.
+publica portas. Os secrets da VPS (`VPS_HOST`, `VPS_PORT`, `VPS_USER` e
+`VPS_SSH_KEY`, todos obrigatórios) são os mesmos para os CDs.
 O passo a passo está em [`backend/docs/deploy.md`](backend/docs/deploy.md).

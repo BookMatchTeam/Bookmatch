@@ -42,10 +42,9 @@ jobs:
           VPS_PORT: ${{ secrets.VPS_PORT }}
           VPS_USER: ${{ secrets.VPS_USER }}
           VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
-          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
         run: |
           faltando=""
-          for nome in VPS_HOST VPS_PORT VPS_USER VPS_SSH_KEY VPS_KNOWN_HOSTS; do
+          for nome in VPS_HOST VPS_PORT VPS_USER VPS_SSH_KEY; do
             [ -n "${!nome}" ] || faltando="$faltando $nome"
           done
           if [ -n "$faltando" ]; then
@@ -62,7 +61,13 @@ jobs:
           install -m 700 -d ~/.ssh
           printf '%s\n' "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_deploy
           chmod 600 ~/.ssh/id_deploy
-          printf '%s\n' "${{ secrets.VPS_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          # Identidade da VPS lida na hora (como no CD antigo do backend), em vez
+          # de um secret VPS_KNOWN_HOSTS fixo.
+          ssh-keyscan -p "${{ secrets.VPS_PORT }}" -t ed25519 "${{ secrets.VPS_HOST }}" > ~/.ssh/known_hosts
+          if [ ! -s ~/.ssh/known_hosts ]; then
+            echo "::error::Nao foi possivel ler a identidade SSH da VPS (host ou porta errados?)."
+            exit 1
+          fi
           cat > ~/.ssh/config <<EOF
           Host vps
             HostName ${{ secrets.VPS_HOST }}

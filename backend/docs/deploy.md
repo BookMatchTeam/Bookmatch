@@ -303,7 +303,8 @@ alterar esses arquivos.
 
 No GitHub, em `BookMatchTeam/Bookmatch` -> Settings -> Secrets and
 variables -> Actions -> New repository secret, crie (os mesmos secrets servem
-para o backend, o frontend e o Caddy de borda):
+para o backend e o Caddy de borda; a identidade da VPS e lida pelo CD a cada
+deploy com `ssh-keyscan`, sem secret proprio):
 
 | Nome              | Valor                                                     |
 | ----------------- | --------------------------------------------------------- |
@@ -311,9 +312,8 @@ para o backend, o frontend e o Caddy de borda):
 | `VPS_PORT`        | porta do SSH na VPS (padrao: `22`)                        |
 | `VPS_USER`        | `deploy`                                                  |
 | `VPS_SSH_KEY`     | o conteudo da chave privada, de `BEGIN` ate `END`         |
-| `VPS_KNOWN_HOSTS` | saida de `ssh-keyscan -p <porta> -H 187.41.123.210` (confira a impressao digital) |
 
-Os cinco sao obrigatorios: sem algum deles, o CD falha no passo "Conferir
+Os quatro sao obrigatorios: sem algum deles, o CD falha no passo "Conferir
 secrets da VPS" dizendo qual falta.
 
 ---
