@@ -6,7 +6,9 @@ import { paths } from '@/app/router/paths'
 export function PublicLayout() {
   const { pathname } = useLocation()
   const isCustomAuthPage =
-    pathname === paths.signIn || pathname === paths.signUp
+    pathname === paths.signIn ||
+    pathname === paths.signUp ||
+    pathname === paths.recoverPassword
 
   useEffect(() => {
     const titles: Record<string, string> = {
