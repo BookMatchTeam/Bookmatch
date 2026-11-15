@@ -45,12 +45,16 @@ Os ícones oficiais incluem versões de 192 px, 512 px, `maskable` e Apple Touch
 
 ## Etapa 3 — Estrutura da aplicação
 
-Status: não iniciada.
+Status: concluída.
 
-- [ ] Configurar os providers globais.
-- [ ] Configurar o React Router.
-- [ ] Configurar o TanStack Query.
-- [ ] Criar as pastas somente quando a primeira implementação exigir.
+- [x] Configurar os providers globais.
+- [x] Configurar o React Router.
+- [x] Configurar o TanStack Query.
+- [x] Criar layouts público e autenticado.
+- [x] Criar páginas provisórias e uma rota não encontrada.
+- [x] Criar as pastas somente quando a primeira implementação exigir.
+
+As rotas públicas são `/entrar`, `/criar-conta` e `/recuperar-senha`. As rotas `/descobrir`, `/matches`, `/mensagens` e `/perfil` compartilham o layout autenticado. A proteção por sessão será adicionada durante a implementação da autenticação; nesta etapa, o layout apenas organiza a navegação e a composição visual.
 
 Estrutura planejada:
 
