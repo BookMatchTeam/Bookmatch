@@ -37,6 +37,10 @@ O CORS deve habilitar credenciais e nunca pode combinar `Access-Control-Allow-Or
 
 Para métodos que alteram estado (`POST`, `PUT`, `PATCH` e `DELETE`), o cliente envia `X-BookMatch-Client: web`. O backend deverá exigir esse header e validar `Origin` contra a lista permitida. O header não simples força o preflight do CORS; combinado com `SameSite=Lax`, cookie restrito ao host da API e lista exata de origins, forma a proteção inicial contra CSRF.
 
+Frontend e API são subdomínios de `galpao.tech` e, por isso, pertencem ao mesmo *site* para o navegador. O `SameSite=Lax` não bloqueia requisições vindas de outros subdomínios de `galpao.tech`; ele atua apenas contra sites de outros domínios. A proteção efetiva contra CSRF vem da validação de `Origin` combinada com a exigência de `X-BookMatch-Client`, e o `SameSite` funciona somente como camada complementar.
+
+Requisições `GET`, `HEAD` e `OPTIONS` não enviam `X-BookMatch-Client` e, portanto, não passam por essa verificação. Por isso, esses métodos nunca devem alterar estado no backend.
+
 O backend deve incluir `X-BookMatch-Client` em `Access-Control-Allow-Headers`. Caso futuramente seja necessário aceitar novos origins ou requisições cross-site, deverá ser adotado um token CSRF explícito antes dessa mudança.
 
 ## Formato das respostas
@@ -73,3 +77,26 @@ O frontend também aceita o formato padrão do `ValidationPipe` do NestJS, em qu
 ## Pendências para a autenticação
 
 Antes de proteger as rotas, o backend deverá fornecer o contrato real dos endpoints de criar sessão, consultar sessão e encerrar sessão. Só então o frontend implementará a consulta de sessão, o redirecionamento de `/` e as proteções do layout autenticado.
+
+## Pendências conhecidas
+
+Pontos identificados na revisão da Etapa 4 que serão tratados quando a integração com o backend começar.
+
+### Backend
+
+- [ ] Habilitar CORS com a lista exata de origins e `credentials: true`.
+- [ ] Incluir `X-BookMatch-Client` em `Access-Control-Allow-Headers`.
+- [ ] Validar `Origin` e exigir `X-BookMatch-Client` nos métodos `POST`, `PUT`, `PATCH` e `DELETE`.
+
+Sem essas configurações, o navegador bloqueia as chamadas de `bookmatch.galpao.tech` para `api-bookmatch.galpao.tech`.
+
+### Cliente HTTP
+
+- [ ] Aceitar `FormData` no corpo da requisição, sem definir `content-type` manualmente, para permitir o envio de imagens de perfil e capas.
+- [ ] Tratar como `invalid-response` uma resposta bem-sucedida que não seja JSON quando a chamada espera JSON, em vez de devolver o texto como se fosse o tipo esperado.
+- [ ] Classificar o status `413` como um tipo de erro próprio, com mensagem sobre tamanho de arquivo. Outros `4xx` sem tratamento específico, como `405` e `410`, continuam como `unknown`.
+
+### Aplicação
+
+- [ ] Tratar `401` de forma global, por exemplo no `onError` do `QueryCache`, limpando a sessão e redirecionando para `/entrar`. Depende do fluxo de autenticação da Etapa 5.
+- [ ] Remover `navigateFallbackDenylist: [/^\/api/]` da configuração do PWA, que não tem efeito porque a API está em outro subdomínio.
