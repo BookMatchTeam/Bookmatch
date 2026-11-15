@@ -1,0 +1,70 @@
+@import url('https://fonts.googleapis.com/css2?family=Lobster+Two:ital,wght@1,700&family=Poppins:wght@400;500;600&display=swap');
+@import 'tailwindcss';
+
+/* Modo escuro ativado com a classe .dark no <html> */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Tokens do Guia de Identidade Visual BookMatch (modo claro = padrão) */
+:root {
+  --bm-canvas: #f7fbfe;
+  --bm-surface: #ffffff;
+  --bm-text: #010d23;
+  --bm-text-2: #35536e;
+  --bm-muted: #60758a;
+  --bm-border: #4e8ea8;
+  --bm-link: #026b8b;
+  --bm-book: #9a5b00;
+  --bm-success: #137a54;
+  --bm-warning: #9a5b00;
+  --bm-error: #b42318;
+  --bm-hero: #e6f6ef;
+}
+.dark {
+  --bm-canvas: #010d23;
+  --bm-surface: #03223f;
+  --bm-text: #f7fbfe;
+  --bm-text-2: #c7d4e2;
+  --bm-muted: #8ea2b8;
+  --bm-border: #4b7590;
+  --bm-link: #038bbb;
+  --bm-book: #fccb6f;
+  --bm-success: #53d69c;
+  --bm-warning: #fccb6f;
+  --bm-error: #ff7a70;
+  --bm-hero: #03223f;
+}
+
+@theme inline {
+  --font-sans: 'Poppins', ui-sans-serif, system-ui, sans-serif;
+  --font-brand: 'Lobster Two', cursive;
+
+  /* Cores fixas da marca */
+  --color-navy-950: #010d23;
+  --color-navy: #03223f;
+  --color-turquoise: #038bbb;
+  --color-yellow: #fccb6f;
+  --color-amber: #e19f41;
+
+  /* Cores semânticas (trocam com o tema) */
+  --color-canvas: var(--bm-canvas);
+  --color-surface: var(--bm-surface);
+  --color-fg: var(--bm-text);
+  --color-fg-2: var(--bm-text-2);
+  --color-muted: var(--bm-muted);
+  --color-line: var(--bm-border);
+  --color-link: var(--bm-link);
+  --color-book: var(--bm-book);
+  --color-success: var(--bm-success);
+  --color-warning: var(--bm-warning);
+  --color-error: var(--bm-error);
+  --color-hero: var(--bm-hero);
+
+  --radius-card: 14px;
+}
+
+body {
+  @apply bg-canvas text-fg font-sans antialiased;
+}
+
+@keyframes float { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-8px) } }
+@keyframes blink { 50% { opacity: 0 } }
