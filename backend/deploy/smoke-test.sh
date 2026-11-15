@@ -1,22 +1,26 @@
 #!/usr/bin/env bash
 # Teste de fumaca do pacote de producao.
 #
-# Executa o mesmo roteiro do deploy/deploy.sh numa copia descartavel:
+# Executa o mesmo roteiro do deploy.sh numa copia descartavel:
 # monta as imagens (em vez de baixar do GHCR), sobe o banco, aplica as
-# migrations, sobe a API e chama o /health. Nao sobe o Caddy (nao ha dominio
-# nem certificado) e apaga tudo no fim.
+# migrations, sobe a API e chama o /health. O Caddy de borda fica de fora
+# (nao ha dominio nem certificado) e tudo e apagado no fim.
 #
 # Roda no CI, antes do merge, e tambem manualmente:
-#   bash deploy/smoke-test.sh
+#   bash backend/deploy/smoke-test.sh
 #
-# Usa um projeto Compose proprio (bookmatch-smoke) e um .env temporario, entao
-# nao toca nos containers, volumes nem no .env de producao.
+# Usa um projeto Compose proprio (bookmatch-smoke), um .env temporario e uma
+# rede "edge" propria, entao nao toca nos containers, volumes, redes nem no
+# .env de producao.
 set -Eeuo pipefail
 
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")"
 
 PROJECT=bookmatch-smoke
 ENV_FILE="$(mktemp)"
+# O compose.prod.yaml usa uma rede externa (a do Caddy de borda). Aqui ela e
+# trocada por uma rede descartavel, criada e apagada por este script.
+export EDGE_NETWORK=bookmatch-smoke-edge
 
 compose() {
   docker compose -p "$PROJECT" --env-file "$ENV_FILE" \
@@ -25,6 +29,7 @@ compose() {
 
 cleanup() {
   compose down -v --remove-orphans > /dev/null 2>&1 || true
+  docker network rm "$EDGE_NETWORK" > /dev/null 2>&1 || true
   rm -f "$ENV_FILE"
 }
 trap cleanup EXIT
@@ -37,12 +42,14 @@ trap on_error ERR
 
 cat > "$ENV_FILE" <<EOF
 IMAGE_TAG=smoke
-API_DOMAIN=localhost
 MARIADB_DATABASE=bookmatch
 MARIADB_USER=bookmatch
 MARIADB_PASSWORD=smoketest-$RANDOM$RANDOM
 MARIADB_ROOT_PASSWORD=smoketest-root-$RANDOM$RANDOM
 EOF
+
+docker network inspect "$EDGE_NETWORK" > /dev/null 2>&1 \
+  || docker network create "$EDGE_NETWORK" > /dev/null
 
 echo "==> Construindo as imagens"
 compose build api migrate

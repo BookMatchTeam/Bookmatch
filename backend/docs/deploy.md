@@ -1,33 +1,38 @@
 # Deploy na VPS
 
 Este guia prepara a VPS para receber a API e liga o deploy automatico (CD).
-Depois de pronto, todo merge na `main` que passar no CI e publicado sozinho.
+Depois de pronto, todo merge na `main` com mudanca em `backend/` que passar no
+CI e publicado sozinho.
+
+O backend vive no monorepo `BookMatchTeam/Bookmatch`, ao lado do frontend.
+HTTPS e dominios ficam com o **Caddy de borda** (`infra/edge`, veja
+[`infra/edge/README.md`](../../infra/edge/README.md)), que tem CI/CD proprio.
 
 ## Como funciona
 
 ```text
-pull request
-  -> CI (.github/workflows/ci.yml), job "Lint, build e testes":
+pull request com mudanca em backend/
+  -> Backend CI (.github/workflows/backend-ci.yml), job "Lint, build e testes":
        lint, build, testes unitarios e e2e
-       smoke test (deploy/smoke-test.sh): monta as imagens e liga banco,
-       migrations e API como na VPS, chamando o /health
+       smoke test (backend/deploy/smoke-test.sh): monta as imagens e liga
+       banco, migrations e API como na VPS, chamando o /health
   -> o merge so e liberado com o CI verde
 
 merge na main
-  -> CI roda de novo na main
-  -> CD (.github/workflows/cd.yml), apenas se o CI passou:
+  -> Backend CI roda de novo na main
+  -> Backend CD (.github/workflows/backend-cd.yml), apenas se o CI passou:
        job "Montar e publicar as imagens", na maquina do GitHub:
          confere que o commit pertence a main
          monta as imagens da API e do migrate e publica no GHCR
-         (ghcr.io/rotiivv/bookmatch-backend[-migrate]:<hash do commit>)
+         (ghcr.io/bookmatchteam/bookmatch-backend[-migrate]:<hash do commit>)
        job "Deploy na VPS":
-         envia compose.prod.yaml, deploy/Caddyfile e deploy/deploy.sh
+         envia backend/deploy/compose.prod.yaml e backend/deploy/deploy.sh
          para ~/bookmatch, entra no GHCR com um token temporario e executa
-         bash deploy/deploy.sh
+         bash ~/bookmatch/deploy.sh
            -> baixa as imagens prontas da versao
            -> sobe o MariaDB
            -> aplica as migrations do Prisma
-           -> sobe a API e o Caddy e espera a API ficar saudavel
+           -> sobe a API (na rede bookmatch-edge) e espera ela ficar saudavel
 ```
 
 A VPS nao tem o codigo-fonte nem o Git e nao compila nada: recebe imagens
@@ -37,21 +42,25 @@ disparado a mao (veja "Operacao do dia a dia").
 Na VPS ficam so estes arquivos:
 
 ```text
-/home/deploy/bookmatch/
-|-- compose.prod.yaml     enviado pelo CD a cada deploy
-|-- .env                  criado por voce (fase 3); fica so na VPS
-`-- deploy/
-    |-- Caddyfile         enviado pelo CD
-    `-- deploy.sh         enviado pelo CD
+/home/deploy/
+|-- bookmatch/              backend (este guia)
+|   |-- compose.prod.yaml   enviado pelo CD a cada deploy
+|   |-- deploy.sh           enviado pelo CD
+|   `-- .env                criado por voce (fase 3); fica so na VPS
+|-- bookmatch-edge/         Caddy de borda (infra/edge), enviado pelo Edge CD
+`-- bookmatch-frontend/     frontend, enviado pelo Frontend CD
 ```
 
-Na VPS rodam tres containers, descritos em `compose.prod.yaml`:
+O backend roda dois containers, descritos em `backend/deploy/compose.prod.yaml`:
 
 | Servico   | Funcao                                                    | Exposto na internet |
 | --------- | --------------------------------------------------------- | ------------------- |
-| `caddy`   | Recebe as requisicoes, cuida do HTTPS e repassa para a API | Sim (80 e 443)      |
 | `api`     | A aplicacao NestJS                                         | Nao                 |
 | `mariadb` | O banco de dados, com os dados num volume persistente      | Nao                 |
+
+A internet chega pelo Caddy de borda (portas 80 e 443), que alcanca a API pela
+rede Docker `bookmatch-edge`, com o nome `bookmatch-backend`. O banco fica fora
+dessa rede.
 
 O servico `migrate` nao fica rodando: o `deploy.sh` o executa uma vez por
 deploy para aplicar as migrations.
@@ -247,7 +256,7 @@ exit
 ## Fase 3: pasta e configuracao de producao
 
 Como `deploy` (`su - deploy`, sozinho). A VPS nao recebe o repositorio: so
-precisa da pasta e do `.env` (modelo em `deploy/env.production.example`). O
+precisa da pasta e do `.env` (modelo em `backend/deploy/env.production.example`). O
 restante o CD envia a cada deploy.
 
 Crie o `.env` de producao com senhas geradas automaticamente:
@@ -255,7 +264,6 @@ Crie o `.env` de producao com senhas geradas automaticamente:
 ```bash
 mkdir -p ~/bookmatch && cd ~/bookmatch
 cat > .env <<EOF
-API_DOMAIN=api-bookmatch.galpao.tech
 MARIADB_DATABASE=bookmatch
 MARIADB_USER=bookmatch
 MARIADB_PASSWORD=$(openssl rand -hex 24)
@@ -293,24 +301,26 @@ O `-N ""` deixa a chave sem senha, porque o GitHub nao tem como digita-la. Os
 `chmod` sao obrigatorios: o SSH recusa a chave se outros usuarios puderem
 alterar esses arquivos.
 
-No GitHub, em `Rotiivv/bookmatch-backend` -> Settings -> Secrets and
-variables -> Actions -> New repository secret, crie:
+No GitHub, em `BookMatchTeam/Bookmatch` -> Settings -> Secrets and
+variables -> Actions -> New repository secret, crie (os mesmos secrets servem
+para o backend, o frontend e o Caddy de borda):
 
-| Nome          | Valor                                             |
-| ------------- | ------------------------------------------------- |
-| `VPS_HOST`    | `187.41.123.210`                                  |
-| `VPS_USER`    | `deploy`                                          |
-| `VPS_SSH_KEY` | o conteudo da chave privada, de `BEGIN` ate `END` |
-
-Sem esses secrets, o CD termina com um aviso e nao publica nada.
+| Nome              | Valor                                                     |
+| ----------------- | --------------------------------------------------------- |
+| `VPS_HOST`        | `187.41.123.210`                                          |
+| `VPS_USER`        | `deploy`                                                  |
+| `VPS_SSH_KEY`     | o conteudo da chave privada, de `BEGIN` ate `END`         |
+| `VPS_KNOWN_HOSTS` | saida de `ssh-keyscan -H 187.41.123.210` (confira a impressao digital) |
+| `VPS_PORT`        | opcional; so se o SSH nao estiver na porta 22             |
 
 ---
 
 ## Fase 5: primeiro deploy
 
 Confira o DNS na VPS (`getent hosts api-bookmatch.galpao.tech` deve mostrar
-`187.41.123.210`) e dispare o CD: Actions -> CD -> Run workflow (branch
-`main`, campo vazio). Depois:
+`187.41.123.210`) e dispare o CD: Actions -> Backend CD -> Run workflow
+(branch `main`, campo vazio). O Caddy de borda tambem precisa estar no ar
+(Actions -> Edge CD -> Run workflow). Depois:
 
 ```bash
 curl -sS https://api-bookmatch.galpao.tech/health
@@ -321,7 +331,7 @@ seguintes so baixam as camadas que mudaram. A resposta esperada do `curl` e
 `{"status":"ok","service":"bookmatch-backend",...}`. O Swagger fica em
 `https://api-bookmatch.galpao.tech/api/docs`.
 
-Se o HTTPS falhar, veja os logs do Caddy (em `~/bookmatch`:
+Se o HTTPS falhar, veja os logs do Caddy de borda (em `~/bookmatch-edge`:
 `docker compose -f compose.prod.yaml logs caddy`). As causas mais comuns sao
 o DNS ainda nao apontar para a VPS ou a porta 80 estar fechada.
 
@@ -334,7 +344,7 @@ rm ~/.ssh/github_actions
 
 ### Imagens no GHCR
 
-As imagens aparecem em github.com/Rotiivv -> Packages
+As imagens aparecem em github.com/BookMatchTeam -> Packages
 (`bookmatch-backend` e `bookmatch-backend-migrate`), uma versao por commit
 publicado. Pacotes privados contam no limite de armazenamento do plano do
 GitHub; como o repositorio e publico e as imagens so tem o codigo compilado,
@@ -350,13 +360,13 @@ funciona do mesmo jeito nos dois casos.
 | Para                          | Como                                                                 |
 | ----------------------------- | -------------------------------------------------------------------- |
 | Publicar uma mudanca          | Merge do PR na `main`. O CI roda e, se passar, o CD publica sozinho  |
-| Republicar a versao atual     | Actions -> CD -> Run workflow, campo vazio                           |
-| Voltar para uma versao antiga | Actions -> CD -> Run workflow, informando o hash de um commit da `main` |
+| Republicar a versao atual     | Actions -> Backend CD -> Run workflow, campo vazio                   |
+| Voltar para uma versao antiga | Actions -> Backend CD -> Run workflow, informando o hash de um commit da `main` |
 
 O CD so publica commits que pertencem a `main`. Se as imagens do commit ja
 estao no GHCR, ele usa as mesmas, sem montar de novo. Commits anteriores a
 publicacao pelo GHCR nao tem imagem e sao montados na hora, o que so funciona
-se o `Dockerfile` daquele commit ja tiver o estagio `migrate`.
+se o commit ja for do monorepo (com o codigo em `backend/`).
 
 Ao voltar uma versao, as migrations ja aplicadas nao sao desfeitas: o banco
 continua com a estrutura mais nova. Depois, corrija o problema num PR normal.
@@ -375,8 +385,8 @@ Para publicar, use o CD (pelo GitHub). Um `docker compose up` feito a mao, sem
 o `IMAGE_TAG` que o CD informa, falha de proposito ao procurar a imagem
 `defina-IMAGE_TAG`, em vez de publicar uma versao qualquer.
 
-A cada deploy, o `deploy.sh` apaga da VPS as imagens de outras versoes e
-mantem as da versao atual.
+A cada deploy, o `deploy.sh` apaga da VPS as imagens do backend de outras
+versoes (label `com.bookmatch.app=backend`) e mantem as da versao atual.
 
 Os logs de cada container ficam limitados a 3 arquivos de 10 MB (configuracao
 `x-logging` no `compose.prod.yaml`); os mais antigos sao apagados sozinhos.
@@ -387,42 +397,43 @@ nao deve ser usado em producao.
 
 ### Smoke test
 
-O `deploy/smoke-test.sh` roda no CI, mas tambem pode ser executado em
+O `backend/deploy/smoke-test.sh` roda no CI, mas tambem pode ser executado em
 qualquer maquina com Docker. Ele monta as imagens a partir do codigo
 (juntando o `compose.build.yaml` ao `compose.prod.yaml`) em vez de baixa-las
 do GHCR:
 
 ```bash
-bash deploy/smoke-test.sh
+bash backend/deploy/smoke-test.sh
 ```
 
-Ele usa um projeto Compose separado (`bookmatch-smoke`) e um `.env`
-temporario, sobe banco, migrations e API, chama o `/health` e apaga tudo no
+Ele usa um projeto Compose separado (`bookmatch-smoke`), uma rede `edge`
+propria (`bookmatch-smoke-edge`) e um `.env` temporario, sobe banco, migrations e API, chama o `/health` e apaga tudo no
 fim. Nao toca nos containers nem no `.env` de producao.
 
 ---
 
-## Migracao do formato antigo (uma vez)
+## Migracao para o monorepo (uma vez)
 
-Ate o PR #4, a VPS tinha um clone do repositorio em `~/bookmatch-backend` e
-compilava a API. Para passar ao formato atual sem perder dados:
+Ate a vinda para o `BookMatchTeam/Bookmatch`, o backend tinha repositorio
+proprio (`Rotiivv/bookmatch-backend`), imagens em `ghcr.io/rotiivv/...` e o
+Caddy dentro do projeto Compose `bookmatch-prod`. A pasta `~/bookmatch` e o
+`.env` continuam os mesmos; o nome do projeto Compose tambem, entao o volume
+do banco (`bookmatch-prod_mariadb_data`) e reaproveitado.
 
-1. **Antes do merge**, como `deploy`, copie (nao mova) o `.env`:
-
-   ```bash
-   mkdir -p ~/bookmatch
-   cp ~/bookmatch-backend/.env ~/bookmatch/.env
-   chmod 600 ~/bookmatch/.env
-   ```
-
-2. Faca o merge. O CD publica a partir de `~/bookmatch`. Como o nome do
-   projeto Compose continua `bookmatch-prod`, os containers e o volume do
-   banco sao os mesmos: os dados sao preservados.
-
-3. Confira o `/health` e o `docker compose -f compose.prod.yaml ps` em
-   `~/bookmatch`.
-
-4. So entao limpe o formato antigo: a pasta `~/bookmatch-backend`, as imagens
-   montadas na VPS (`bookmatch-backend:latest` e
-   `bookmatch-backend-build:latest`), o cache de build do Docker e, se quiser,
-   o Git.
+1. **Antes do merge**, crie os secrets da fase 4 no `BookMatchTeam/Bookmatch`
+   e desligue o CD do repositorio antigo (Actions -> CD -> Disable workflow),
+   para que os dois nao publiquem na mesma VPS.
+2. Faca o merge. Rodam o **Backend CD** e o **Edge CD**, em qualquer ordem:
+   - o Backend CD sobe a API nova ja na rede `bookmatch-edge`; o Caddy antigo
+     continua servindo ate o Edge CD rodar;
+   - o Edge CD remove o Caddy antigo do projeto `bookmatch-prod`, liga a API
+     atual a rede `bookmatch-edge` (se ela ainda for a antiga) e sobe o Caddy
+     de borda. A API fica fora do ar so durante essa troca e a emissao do
+     certificado (segundos).
+3. Confira `curl -sS https://api-bookmatch.galpao.tech/health`.
+4. So entao limpe o que sobrou do formato antigo:
+   - `rm -r ~/bookmatch/deploy` (Caddyfile e deploy.sh velhos; o novo
+     deploy.sh fica direto em `~/bookmatch`);
+   - as imagens antigas: `docker image ls 'ghcr.io/rotiivv/*'` e
+     `docker image rm` nas que aparecerem;
+   - a linha `API_DOMAIN` do `~/bookmatch/.env`, que deixa de ser usada.

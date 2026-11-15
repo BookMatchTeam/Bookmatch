@@ -1,24 +1,30 @@
-# Ambiente de producao na VPS.
+# Producao do backend na VPS (~/bookmatch).
+# Este arquivo e reenviado pelo CD a cada deploy: nao edite direto na VPS.
 #
 # Servicos:
-# - caddy:   unica porta aberta para a internet (80/443). Obtem e renova o
-#            certificado HTTPS e repassa as requisicoes para a API.
 # - api:     a aplicacao, imagem pronta baixada do GHCR.
-# - mariadb: o banco, acessivel apenas pela rede interna do Compose.
+# - mariadb: o banco, acessivel apenas pela rede interna deste projeto.
 # - migrate: tarefa avulsa que aplica as migrations do Prisma. Nao fica
-#            rodando; e executada pelo deploy/deploy.sh a cada deploy.
+#            rodando; e executada pelo deploy.sh a cada deploy.
+#
+# HTTPS e dominio NAO ficam aqui: quem recebe a internet e o Caddy de borda
+# (infra/edge), que alcanca a API pela rede compartilhada "bookmatch-edge",
+# usando o nome "bookmatch-backend".
 #
 # Os valores vem do arquivo .env ao lado deste arquivo, na VPS
-# (modelo em deploy/env.production.example).
+# (modelo em env.production.example).
 #
-# IMAGE_TAG e o commit publicado. Quem informa e o deploy/deploy.sh, chamado
-# pelo workflow de CD. Sem ele, comandos como "ps" e "logs" funcionam, mas um
-# "up" falha ao procurar a imagem "defina-IMAGE_TAG", em vez de publicar algo
-# por engano.
+# IMAGE_TAG e o commit publicado. Quem informa e o deploy.sh, chamado pelo
+# workflow de CD. Sem ele, comandos como "ps" e "logs" funcionam, mas um "up"
+# falha ao procurar a imagem "defina-IMAGE_TAG", em vez de publicar algo por
+# engano.
 #
 # Este arquivo nao monta imagens. No CI, o smoke test junta o
 # compose.build.yaml, que acrescenta os "build:".
 
+# O nome do projeto continua "bookmatch-prod" (o mesmo de antes da ida para o
+# monorepo): o volume do banco e "bookmatch-prod_mariadb_data". Trocar este
+# nome faria o Compose criar um banco novo e vazio.
 name: bookmatch-prod
 
 # Limita os logs de cada container a 3 arquivos de 10 MB. Sem isso, o Docker
@@ -30,26 +36,8 @@ x-logging: &logging
     max-file: "3"
 
 services:
-  caddy:
-    image: caddy:2.10.2-alpine
-    logging: *logging
-    restart: unless-stopped
-    environment:
-      API_DOMAIN: ${API_DOMAIN:?defina API_DOMAIN no .env}
-    ports:
-      - "80:80"
-      - "443:443"
-      - "443:443/udp"
-    volumes:
-      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
-    depends_on:
-      api:
-        condition: service_healthy
-
   api:
-    image: ghcr.io/rotiivv/bookmatch-backend:${IMAGE_TAG:-defina-IMAGE_TAG}
+    image: ghcr.io/bookmatchteam/bookmatch-backend:${IMAGE_TAG:-defina-IMAGE_TAG}
     logging: *logging
     restart: unless-stopped
     environment:
@@ -59,7 +47,12 @@ services:
       DATABASE_USER: ${MARIADB_USER:?defina MARIADB_USER no .env}
       DATABASE_PASSWORD: ${MARIADB_PASSWORD:?defina MARIADB_PASSWORD no .env}
       DATABASE_NAME: ${MARIADB_DATABASE:?defina MARIADB_DATABASE no .env}
-    # Sem "ports": a API so e alcancada pelo Caddy, pela rede interna.
+    # Sem "ports": a API so e alcancada pelo Caddy de borda, pela rede "edge".
+    networks:
+      default:
+      edge:
+        aliases:
+          - bookmatch-backend
     healthcheck:
       test:
         [
@@ -85,7 +78,7 @@ services:
       MARIADB_USER: ${MARIADB_USER:?defina MARIADB_USER no .env}
       MARIADB_PASSWORD: ${MARIADB_PASSWORD:?defina MARIADB_PASSWORD no .env}
       MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:?defina MARIADB_ROOT_PASSWORD no .env}
-    # Sem "ports": o banco nao fica exposto na internet.
+    # Sem "ports" e fora da rede "edge": so a API e o migrate alcancam o banco.
     volumes:
       - mariadb_data:/var/lib/mysql
     healthcheck:
@@ -97,7 +90,7 @@ services:
 
   migrate:
     # So a CLI do Prisma, o schema e as migrations (estagio migrate do Dockerfile).
-    image: ghcr.io/rotiivv/bookmatch-backend-migrate:${IMAGE_TAG:-defina-IMAGE_TAG}
+    image: ghcr.io/bookmatchteam/bookmatch-backend-migrate:${IMAGE_TAG:-defina-IMAGE_TAG}
     environment:
       DATABASE_URL: mysql://${MARIADB_USER}:${MARIADB_PASSWORD}@mariadb:3306/${MARIADB_DATABASE}
     depends_on:
@@ -107,5 +100,10 @@ services:
 
 volumes:
   mariadb_data:
-  caddy_data:
-  caddy_config:
+
+networks:
+  # Rede compartilhada com o Caddy de borda e o frontend. Criada pelo deploy.sh
+  # (de quem chegar primeiro). O smoke test troca o nome por uma rede propria.
+  edge:
+    external: true
+    name: ${EDGE_NETWORK:-bookmatch-edge}

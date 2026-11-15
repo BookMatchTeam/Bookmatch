@@ -11,8 +11,10 @@
 # - runtime: imagem da API: dependencias de producao e o dist/ compilado.
 
 FROM node:24-slim AS deps
-# Liga as imagens publicadas no GHCR a este repositorio.
-LABEL org.opencontainers.image.source=https://github.com/Rotiivv/bookmatch-backend
+# source: liga as imagens publicadas no GHCR ao repositorio.
+# com.bookmatch.app: usada pelo deploy.sh para apagar so imagens antigas do backend.
+LABEL org.opencontainers.image.source=https://github.com/BookMatchTeam/Bookmatch \
+      com.bookmatch.app="backend"
 WORKDIR /app
 
 # A CLI do Prisma (usada pelo servico migrate) precisa da biblioteca OpenSSL,
@@ -46,7 +48,8 @@ CMD ["node_modules/.bin/prisma", "migrate", "deploy"]
 
 
 FROM node:24-slim AS runtime
-LABEL org.opencontainers.image.source=https://github.com/Rotiivv/bookmatch-backend
+LABEL org.opencontainers.image.source=https://github.com/BookMatchTeam/Bookmatch \
+      com.bookmatch.app="backend"
 ENV NODE_ENV=production
 WORKDIR /app
 

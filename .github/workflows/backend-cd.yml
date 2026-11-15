@@ -1,9 +1,9 @@
-name: CD
+name: Backend CD
 
 on:
-  # Automatico: quando o workflow CI termina na main.
+  # Automatico: quando o "Backend CI" termina na main.
   workflow_run:
-    workflows: [CI]
+    workflows: ["Backend CI"]
     types: [completed]
     branches: [main]
   # Manual: botao "Run workflow" na aba Actions, para republicar ou voltar
@@ -19,8 +19,8 @@ permissions:
   contents: read
 
 env:
-  IMAGEM_API: ghcr.io/rotiivv/bookmatch-backend
-  IMAGEM_MIGRATE: ghcr.io/rotiivv/bookmatch-backend-migrate
+  IMAGEM_API: ghcr.io/bookmatchteam/bookmatch-backend
+  IMAGEM_MIGRATE: ghcr.io/bookmatchteam/bookmatch-backend-migrate
 
 jobs:
   # 1. Monta as imagens aqui, na maquina do GitHub, e publica no GHCR.
@@ -89,8 +89,8 @@ jobs:
             echo "Imagens de $SHA ja estao no GHCR; nada a montar."
             exit 0
           fi
-          docker build --target runtime -t "$IMAGEM_API:$SHA" .
-          docker build --target migrate -t "$IMAGEM_MIGRATE:$SHA" .
+          docker build --target runtime -t "$IMAGEM_API:$SHA" backend
+          docker build --target migrate -t "$IMAGEM_MIGRATE:$SHA" backend
           docker push "$IMAGEM_API:$SHA"
           docker push "$IMAGEM_MIGRATE:$SHA"
 
@@ -103,59 +103,55 @@ jobs:
       contents: read
       packages: read
     environment:
-      name: producao
+      name: production
       url: https://api-bookmatch.galpao.tech/health
+    # Nunca dois deploys do backend ao mesmo tempo; o segundo espera o primeiro.
     concurrency:
-      group: deploy-producao
+      group: backend-deploy
       cancel-in-progress: false
     env:
-      VPS_HOST: ${{ secrets.VPS_HOST }}
-      VPS_USER: ${{ secrets.VPS_USER }}
-      VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+      SHA: ${{ needs.imagens.outputs.sha }}
     steps:
-      - name: Conferir configuracao
-        id: config
-        run: |
-          if [ -z "$VPS_HOST" ] || [ -z "$VPS_USER" ] || [ -z "$VPS_SSH_KEY" ]; then
-            echo "::warning::Secrets VPS_HOST, VPS_USER e VPS_SSH_KEY nao configurados; deploy ignorado."
-            echo "pronto=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "pronto=true" >> "$GITHUB_OUTPUT"
-          fi
-
+      # Os arquivos de deploy vem do mesmo commit das imagens.
       - uses: actions/checkout@v5
-        if: steps.config.outputs.pronto == 'true'
         with:
           ref: ${{ needs.imagens.outputs.sha }}
+          sparse-checkout: backend/deploy
 
-      - name: Publicar na VPS
-        if: steps.config.outputs.pronto == 'true'
+      - name: Configurar SSH
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          printf '%s\n' "${{ secrets.VPS_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          cat > ~/.ssh/config <<EOF
+          Host vps
+            HostName ${{ secrets.VPS_HOST }}
+            User ${{ secrets.VPS_USER }}
+            Port ${{ secrets.VPS_PORT || 22 }}
+            IdentityFile ~/.ssh/id_deploy
+            IdentitiesOnly yes
+            StrictHostKeyChecking yes
+          EOF
+
+      - name: Enviar compose e deploy.sh
+        run: |
+          tar -C backend/deploy -czf - compose.prod.yaml deploy.sh \
+            | ssh vps 'mkdir -p ~/bookmatch && tar -xzf - -C ~/bookmatch'
+
+      - name: Rodar o deploy na VPS
         env:
-          SHA: ${{ needs.imagens.outputs.sha }}
           # Token temporario deste job (so leitura de pacotes). Expira quando
           # o job termina e nao fica gravado na VPS.
           TOKEN: ${{ secrets.GITHUB_TOKEN }}
           USUARIO_GHCR: ${{ github.actor }}
         run: |
-          install -d -m 700 ~/.ssh
-          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -t ed25519 "$VPS_HOST" >> ~/.ssh/known_hosts
-
-          vps() {
-            ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes "$VPS_USER@$VPS_HOST" "$@"
-          }
-
-          echo "==> Enviando os arquivos de implantacao para ~/bookmatch"
-          tar -cz compose.prod.yaml deploy/Caddyfile deploy/deploy.sh \
-            | vps 'mkdir -p ~/bookmatch && tar -xz -C ~/bookmatch'
-
+          echo "Versao: $SHA"
           # O token vai pela entrada padrao (nunca na linha de comando) e o
           # logout acontece no fim, mesmo se o deploy falhar.
-          echo "==> Deploy de $SHA"
-          printf '%s' "$TOKEN" | vps "
+          printf '%s' "$TOKEN" | ssh vps "
             set -e
             trap 'docker logout ghcr.io > /dev/null' EXIT
             docker login ghcr.io -u '$USUARIO_GHCR' --password-stdin > /dev/null
-            IMAGE_TAG='$SHA' bash ~/bookmatch/deploy/deploy.sh
+            IMAGE_TAG='$SHA' bash ~/bookmatch/deploy.sh
           "

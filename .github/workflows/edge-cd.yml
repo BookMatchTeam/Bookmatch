@@ -1,0 +1,61 @@
+name: Edge CD
+
+# Roda depois que o "Edge CI" passa na main (mudanca em infra/edge/).
+# Tambem pode ser disparado na mao (Actions > Edge CD > Run workflow).
+# Nao ha imagem propria: o Caddy vem pronto do Docker Hub, com versao fixa
+# no compose. O deploy so envia o Caddyfile e o compose e recarrega.
+on:
+  workflow_run:
+    workflows: ["Edge CI"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: edge-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy na VPS
+    runs-on: ubuntu-latest
+    if: >-
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push') ||
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
+    environment:
+      name: production
+      url: https://bookmatch.galpao.tech
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          sparse-checkout: infra/edge
+
+      - name: Configurar SSH
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          printf '%s\n' "${{ secrets.VPS_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          cat > ~/.ssh/config <<EOF
+          Host vps
+            HostName ${{ secrets.VPS_HOST }}
+            User ${{ secrets.VPS_USER }}
+            Port ${{ secrets.VPS_PORT || 22 }}
+            IdentityFile ~/.ssh/id_deploy
+            IdentitiesOnly yes
+            StrictHostKeyChecking yes
+          EOF
+
+      - name: Enviar compose, Caddyfile e deploy.sh
+        run: |
+          tar -C infra/edge -czf - compose.prod.yaml deploy.sh config \
+            | ssh vps 'mkdir -p ~/bookmatch-edge && tar -xzf - -C ~/bookmatch-edge'
+
+      - name: Rodar o deploy na VPS
+        run: ssh vps 'bash ~/bookmatch-edge/deploy.sh'

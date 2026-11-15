@@ -1,12 +1,26 @@
-name: CI
+name: Backend CI
 
 on:
+  pull_request:
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-*.yml"
   push:
     branches: [main]
-  pull_request:
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-*.yml"
 
 permissions:
   contents: read
+
+concurrency:
+  group: backend-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: backend
 
 jobs:
   verificar:
@@ -23,6 +37,7 @@ jobs:
         with:
           node-version: 24
           cache: npm
+          cache-dependency-path: backend/package-lock.json
 
       - run: npm ci
       - run: npm run prisma:generate
@@ -33,6 +48,6 @@ jobs:
 
       # Monta as imagens e liga banco, migrations e API como na VPS, chamando
       # o /health no fim. Pega antes do merge os erros que so apareceriam no
-      # deploy. Fica neste job para valer a regra de protecao da main.
+      # deploy.
       - name: Smoke test da producao
         run: bash deploy/smoke-test.sh

@@ -46,18 +46,22 @@ npm run lint
 
 ## Integração contínua
 
-O workflow `.github/workflows/ci.yml` executa lint, build, testes unitários,
-testes e2e e um smoke test do pacote de produção (`deploy/smoke-test.sh`) em
-todo pull request e em todo push na `main`.
+Este backend fica em `backend/` no monorepo `BookMatchTeam/Bookmatch`.
 
-Quando o CI passa na `main`, o workflow `.github/workflows/cd.yml` monta as
-imagens Docker da API, publica no GitHub Container Registry (GHCR) e coloca a
+O workflow `.github/workflows/backend-ci.yml` (na raiz do repositório) executa
+lint, build, testes unitários, testes e2e e um smoke test do pacote de produção
+(`deploy/smoke-test.sh`) em todo pull request e push na `main` que mude algo em
+`backend/`.
+
+Quando o CI passa na `main`, o workflow `.github/workflows/backend-cd.yml` monta
+as imagens Docker da API, publica no GitHub Container Registry (GHCR) e coloca a
 nova versão em produção. Ele também pode ser disparado manualmente, para
 republicar ou voltar para um commit anterior da `main`.
 
 ## Deploy
 
-A API roda numa VPS com Docker Compose (`compose.prod.yaml`): Caddy (HTTPS),
-API e MariaDB. A VPS não tem o código-fonte: recebe só as imagens prontas do
-GHCR e os arquivos de implantação. O passo a passo para preparar a VPS e ligar
-o deploy automático está em [`docs/deploy.md`](docs/deploy.md).
+A API roda numa VPS com Docker Compose (`deploy/compose.prod.yaml`): API e
+MariaDB. HTTPS e domínio ficam com o Caddy de borda do monorepo
+([`infra/edge`](../infra/edge/README.md)). A VPS não tem o código-fonte: recebe
+só as imagens prontas do GHCR e os arquivos de implantação. O passo a passo
+está em [`docs/deploy.md`](docs/deploy.md).
