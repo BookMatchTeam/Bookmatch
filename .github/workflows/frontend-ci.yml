@@ -1,0 +1,83 @@
+name: Frontend CI
+
+on:
+  pull_request:
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend-*.yml"
+  push:
+    branches: [main]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend-*.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frontend-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: frontend
+
+jobs:
+  check:
+    name: Lint, tipos e build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: frontend/.nvmrc
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Lint (oxlint)
+        run: npm run lint
+
+      - name: Checagem de tipos + build (tsc -b && vite build)
+        run: npm run build
+
+  smoke:
+    name: Smoke test da imagem Docker
+    runs-on: ubuntu-latest
+    needs: check
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Montar a imagem
+        run: docker build -t bookmatch-frontend:ci .
+
+      - name: Subir o container e esperar o healthcheck
+        run: |
+          docker run -d --name web -p 8080:80 bookmatch-frontend:ci
+          for i in $(seq 1 30); do
+            status=$(docker inspect -f '{{.State.Health.Status}}' web)
+            echo "healthcheck: $status"
+            [ "$status" = "healthy" ] && exit 0
+            sleep 2
+          done
+          docker logs web
+          exit 1
+
+      - name: Conferir paginas
+        run: |
+          set -e
+          # Raiz entrega o index.html
+          curl -fsS http://localhost:8080/ | grep -q '<div id="root">'
+          # Rota do React (SPA) tambem cai no index.html
+          curl -fsS http://localhost:8080/qualquer/rota | grep -q '<div id="root">'
+          # Assets com cache longo
+          asset=$(curl -fsS http://localhost:8080/ | grep -o '/assets/[^"]*\.js' | head -1)
+          curl -fsSI "http://localhost:8080${asset}" | grep -qi 'cache-control: public, max-age=31536000, immutable'
+          echo "Smoke test OK"
+
+      - name: Logs do container (se falhar)
+        if: failure()
+        run: docker logs web || true

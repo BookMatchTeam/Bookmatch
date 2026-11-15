@@ -1,0 +1,46 @@
+# Caddy de borda na VPS (~/bookmatch-edge).
+# Este arquivo e a pasta config/ sao reenviados pelo CD a cada deploy: nao
+# edite direto na VPS.
+name: bookmatch-edge
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  caddy:
+    image: caddy:2.10.2-alpine
+    logging: *logging
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      # A pasta inteira (e nao so o arquivo): o CD substitui o Caddyfile a cada
+      # deploy e um bind mount de arquivo unico continuaria vendo a versao velha.
+      - ./config:/etc/caddy:ro
+      # Certificados e chaves do HTTPS. Nao apague: o Let's Encrypt limita
+      # quantos certificados novos podem ser emitidos por semana.
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - edge
+    healthcheck:
+      # A API de administracao do Caddy so escuta em localhost, dentro do container.
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:2019/config/"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+volumes:
+  caddy_data:
+  caddy_config:
+
+networks:
+  edge:
+    external: true
+    name: bookmatch-edge

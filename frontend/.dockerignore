@@ -1,0 +1,9 @@
+node_modules
+dist
+deploy
+Dockerfile
+.dockerignore
+*.local
+*.log
+.env*
+!.env.production

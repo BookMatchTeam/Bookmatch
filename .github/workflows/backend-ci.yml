@@ -1,0 +1,53 @@
+name: Backend CI
+
+on:
+  pull_request:
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-*.yml"
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-*.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: backend
+
+jobs:
+  verificar:
+    name: Lint, build e testes
+    runs-on: ubuntu-latest
+    env:
+      # O .env nao e versionado. O prisma7.config.ts exige DATABASE_URL para
+      # carregar, mas o prisma generate nao se conecta ao banco.
+      DATABASE_URL: mysql://ci:ci@localhost:3306/ci
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - run: npm ci
+      - run: npm run prisma:generate
+      - run: npm run lint
+      - run: npm run build
+      - run: npm test
+      - run: npm run test:e2e
+
+      # Monta as imagens e liga banco, migrations e API como na VPS, chamando
+      # o /health no fim. Pega antes do merge os erros que so apareceriam no
+      # deploy.
+      - name: Smoke test da producao
+        run: bash deploy/smoke-test.sh
