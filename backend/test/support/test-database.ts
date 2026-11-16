@@ -15,6 +15,14 @@ export function integrationEnvironment(): Record<string, string> {
     DATABASE_USER: process.env.TEST_DATABASE_USER ?? 'bookmatch',
     DATABASE_PASSWORD: process.env.TEST_DATABASE_PASSWORD ?? 'bookmatch_test',
     DATABASE_NAME: process.env.TEST_DATABASE_NAME ?? 'bookmatch_test',
+    TERMS_VERSION: '1',
+    CORS_ORIGINS: 'http://localhost:5173,http://localhost:3000',
+    VERIFICATION_CODE_SECRET: 'segredo-de-teste-com-32-caracteres!',
+    // Nenhum e-mail sai nos testes de integracao: o envio e substituido.
+    SMTP_HOST: 'localhost',
+    SMTP_PORT: '1025',
+    SMTP_SECURE: 'false',
+    EMAIL_FROM: 'BookMatch <nao-responda@bookmatch.local>',
   };
 }
 

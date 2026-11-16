@@ -46,6 +46,15 @@ MARIADB_DATABASE=bookmatch
 MARIADB_USER=bookmatch
 MARIADB_PASSWORD=smoketest-$RANDOM$RANDOM
 MARIADB_ROOT_PASSWORD=smoketest-root-$RANDOM$RANDOM
+TERMS_VERSION=1
+CORS_ORIGINS=https://bookmatch.galpao.tech
+VERIFICATION_CODE_SECRET=smoketest-$RANDOM$RANDOM-com-pelo-menos-32-caracteres
+# Nenhum e-mail e enviado: o /health nao usa SMTP, e o transporte so conecta
+# no primeiro envio.
+SMTP_HOST=localhost
+SMTP_PORT=1025
+SMTP_SECURE=false
+EMAIL_FROM=BookMatch <nao-responda@bookmatch.local>
 EOF
 
 docker network inspect "$EDGE_NETWORK" > /dev/null 2>&1 \

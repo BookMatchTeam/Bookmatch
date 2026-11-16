@@ -12,18 +12,21 @@ NodeAdapter, Prisma ORM 7 e MariaDB.
 ## Preparação
 
 ```bash
-cp .env.example .env
+cp .env.example .env   # gere o VERIFICATION_CODE_SECRET: openssl rand -hex 32
 npm install
-npm run db:up
+npm run db:up          # MariaDB e Mailpit
 npm run prisma:generate
+npx prisma migrate deploy
 ```
 
-Os modelos de domínio ainda não foram definidos. Por isso, a migration inicial
-deve ser criada somente depois da inclusão dos primeiros modelos em
-`prisma/schema.prisma`:
+O `db:up` também sobe o Mailpit, que recebe os e-mails enviados pela API (os
+códigos de verificação do cadastro) sem entregá-los. A caixa de entrada fica
+em `http://localhost:8025`.
+
+Para alterar o schema, crie uma migration nova:
 
 ```bash
-npm run prisma:migrate -- --name init
+npm run prisma:migrate -- --name <nome>
 ```
 
 ## Execução
