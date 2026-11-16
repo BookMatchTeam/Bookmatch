@@ -191,8 +191,8 @@ pelo backend em cookie HttpOnly.
   objeto `paths`, nunca escritos como texto;
 - as URLs sao em portugues (`/entrar`, `/descobrir`);
 - cada pagina e carregada sob demanda com `lazy`;
-- rotas publicas usam o `PublicLayout`; rotas que exigem sessao usam o
-  `AuthenticatedLayout`.
+- rotas de autenticacao usam o `AuthLayout` de `features/auth/layouts`;
+  rotas que exigem sessao usam o `AuthenticatedLayout`.
 
 ## Estilo
 

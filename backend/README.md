@@ -32,16 +32,27 @@ npm run prisma:migrate -- --name init
 npm run start:dev
 ```
 
-- Saúde: `GET http://localhost:3000/health`
+- Rotas da aplicação: `http://localhost:3000/api/...`
+- Saúde: `GET http://localhost:3000/health` (fora do prefixo `/api`)
 - Swagger UI: `http://localhost:3000/api/docs`
 
 ## Verificações
 
 ```bash
+npm run lint
+npm run typecheck
 npm run build
 npm test
 npm run test:e2e
-npm run lint
+```
+
+Os testes de integração usam um MariaDB próprio, separado do de
+desenvolvimento:
+
+```bash
+npm run db:test:up
+npm run test:integration
+npm run db:test:down
 ```
 
 ## Integração contínua
@@ -49,7 +60,7 @@ npm run lint
 Este backend fica em `backend/` no monorepo `BookMatchTeam/Bookmatch`.
 
 O workflow `.github/workflows/backend-ci.yml` (na raiz do repositório) executa
-lint, build, testes unitários, testes e2e e um smoke test do pacote de produção
+lint, verificação de tipos, build, testes unitários, e2e e de integração e um smoke test do pacote de produção
 (`deploy/smoke-test.sh`) em todo pull request e push na `main` que mude algo em
 `backend/`.
 
@@ -57,6 +68,11 @@ Quando o CI passa na `main`, o workflow `.github/workflows/backend-cd.yml` monta
 as imagens Docker da API, publica no GitHub Container Registry (GHCR) e coloca a
 nova versão em produção. Ele também pode ser disparado manualmente, para
 republicar ou voltar para um commit anterior da `main`.
+
+## Decisões de arquitetura
+
+A arquitetura vigente está no [`ARCHITECTURE.md`](ARCHITECTURE.md). As
+decisões que levaram a ela estão nos ADRs, em [`docs/adr`](docs/adr/README.md).
 
 ## Deploy
 

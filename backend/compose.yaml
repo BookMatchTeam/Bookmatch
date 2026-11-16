@@ -26,5 +26,33 @@ services:
       retries: 12
       start_period: 10s
 
+  # Banco descartavel dos testes de integracao (npm run db:test:up).
+  # Fica no profile "test" para nao subir com o db:up, usa outra porta e guarda
+  # os dados em memoria (tmpfs): nunca encosta no banco de desenvolvimento.
+  mariadb-test:
+    image: mariadb:11.8.9
+    profiles: ["test"]
+    environment:
+      MARIADB_DATABASE: bookmatch_test
+      MARIADB_USER: bookmatch
+      MARIADB_PASSWORD: bookmatch_test
+      MARIADB_ROOT_PASSWORD: bookmatch_root_test
+    ports:
+      - "3307:3306"
+    tmpfs:
+      - /var/lib/mysql
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "healthcheck.sh",
+          "--connect",
+          "--innodb_initialized",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
 volumes:
   mariadb_data:
