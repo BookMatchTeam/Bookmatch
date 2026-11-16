@@ -36,10 +36,13 @@ type BaseFormFieldProps<
   className?: string
   labelClassName?: string
   fieldClassName?: string
+  descriptionClassName?: string
+  errorClassName?: string
 }
 
 type InputFieldProps = {
   as?: 'input'
+  endAdornment?: ReactNode
 } & Omit<
   ComponentProps<typeof Input>,
   'name' | 'value' | 'defaultValue' | 'onChange' | 'onBlur' | 'className'
@@ -83,6 +86,8 @@ export function FormField<
     className,
     labelClassName,
     fieldClassName,
+    descriptionClassName,
+    errorClassName,
     ...fieldProps
   } = props
 
@@ -133,13 +138,23 @@ export function FormField<
             )}
 
             {description ? (
-              <p id={descriptionId} className="text-xs text-muted-foreground">
+              <p
+                id={descriptionId}
+                className={cn(
+                  'text-xs text-muted-foreground',
+                  descriptionClassName,
+                )}
+              >
                 {description}
               </p>
             ) : null}
 
             {errorMessage ? (
-              <p id={errorId} role="alert" className="text-xs text-destructive">
+              <p
+                id={errorId}
+                role="alert"
+                className={cn('text-xs text-destructive', errorClassName)}
+              >
                 {errorMessage}
               </p>
             ) : null}
@@ -175,10 +190,29 @@ function InputControl({
   describedBy,
   className,
   as: _as,
+  endAdornment,
   disabled,
   ...props
 }: InputFieldProps & ControlProps) {
-  return (
+  if (props.type === 'checkbox') {
+    return (
+      <Input
+        {...props}
+        id={id}
+        ref={controlRef}
+        name={name}
+        checked={Boolean(value)}
+        onChange={(event) => onChange(event.target.checked)}
+        onBlur={onBlur}
+        disabled={fieldDisabled || disabled}
+        aria-invalid={invalid || undefined}
+        aria-describedby={describedBy}
+        className={className}
+      />
+    )
+  }
+
+  const input = (
     <Input
       {...props}
       id={id}
@@ -192,6 +226,15 @@ function InputControl({
       aria-describedby={describedBy}
       className={className}
     />
+  )
+
+  if (!endAdornment) return input
+
+  return (
+    <div className="relative">
+      {input}
+      {endAdornment}
+    </div>
   )
 }
 

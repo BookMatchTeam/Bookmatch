@@ -1,43 +1,106 @@
-import type { FormEvent } from 'react'
+import { useState } from 'react'
+import { Eye, EyeOff } from 'lucide-react'
 import { Link, useNavigate } from 'react-router'
 
 import { paths } from '@/app/router/paths'
+import { FormField, useZodForm } from '@/components/form'
 import { AuthButton } from '@/features/auth/components/auth-button'
-import { AuthField } from '@/features/auth/components/auth-field'
-import { AuthThemeToggle } from '@/features/auth/components/auth-theme-toggle'
+import { AuthCardShell } from '@/features/auth/components/auth-card-shell'
+import { authInputVariants } from '@/features/auth/components/auth-input-variants'
 import { AvatarUploadField } from '@/features/auth/components/avatar-upload-field'
-import { PasswordField } from '@/features/auth/components/password-field'
 import { SignUpFooter } from '@/features/auth/components/sign-up/sign-up-footer'
-import { SignUpHeader } from '@/features/auth/components/sign-up/sign-up-header'
 import { SignUpIntro } from '@/features/auth/components/sign-up/sign-up-intro'
-import { StateSelectField } from '@/features/auth/components/state-select-field'
+import { isApiError } from '@/services/api'
+import { brazilianStates } from '@/shared/constants/brazilian-states'
+
+import { useSignUpMutation } from './sign-up.queries'
+import {
+  signUpSchema,
+  type SignUpFormData,
+  type SignUpFormInput,
+} from './sign-up.schema'
 
 const passwordRequirements =
-  'Use pelo menos 8 caracteres, com letras e números.'
+  'Use de 8 a 128 caracteres, com pelo menos uma letra e um número.'
+
+const stateOptions = brazilianStates.map(({ uf, name }) => ({
+  value: uf,
+  label: name,
+}))
+
+const apiErrorFields = {
+  INVALID_NAME: 'name',
+  INVALID_EMAIL: 'email',
+  INVALID_PASSWORD: 'password',
+  INVALID_CITY: 'city',
+  INVALID_STATE: 'state',
+  TERMS_NOT_ACCEPTED: 'acceptedTerms',
+  EMAIL_ALREADY_REGISTERED: 'email',
+} as const satisfies Record<string, keyof SignUpFormInput>
+
+const fieldLabelClassName = 'block text-[11px] font-normal text-auth-label'
+const fieldErrorClassName = 'text-[11px] text-auth-danger'
+const fieldClassName = authInputVariants({ size: 'md' })
 
 export function SignUpPage() {
   const navigate = useNavigate()
+  const [showPassword, setShowPassword] = useState(false)
+  const signUpMutation = useSignUpMutation()
+  const form = useZodForm(signUpSchema, {
+    defaultValues: {
+      name: '',
+      email: '',
+      password: '',
+      city: '',
+      state: '',
+      acceptedTerms: false,
+    },
+  })
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
+  const handleSubmit = form.handleSubmit(async (data: SignUpFormData) => {
+    form.clearErrors()
 
-    if (!event.currentTarget.reportValidity()) return
+    try {
+      const response = await signUpMutation.mutateAsync(data)
+      const search = new URLSearchParams({ email: response.email })
 
-    navigate(paths.signIn)
-  }
+      navigate(`${paths.emailVerification}?${search.toString()}`, {
+        state: { codeWasJustSent: true },
+      })
+    } catch (error) {
+      if (!isApiError(error)) {
+        form.setError('root', {
+          message: 'Não foi possível criar sua conta. Tente novamente.',
+        })
+        return
+      }
+
+      const field = error.code
+        ? apiErrorFields[error.code as keyof typeof apiErrorFields]
+        : undefined
+
+      if (field) {
+        form.setError(field, { message: error.message }, { shouldFocus: true })
+        return
+      }
+
+      form.setError('root', { message: error.message })
+    }
+  })
+
+  const submitting = form.formState.isSubmitting || signUpMutation.isPending
 
   return (
     <>
       <title>Criar conta · BookMatch</title>
-      <div className="mx-auto w-full max-w-[390px] overflow-hidden bg-auth-page-surface px-[18px] text-auth-ink shadow-[var(--auth-page-shadow)]">
-        <SignUpHeader />
+      <AuthCardShell>
         <SignUpIntro />
 
         <form
           className="relative rounded-[13px] border border-auth-divider bg-auth-card px-3.5 py-[18px] text-auth-ink shadow-[var(--auth-form-shadow)]"
           onSubmit={handleSubmit}
+          noValidate
         >
-          <AuthThemeToggle />
           <h2 className="mt-[7px] mb-3 text-[23px] font-bold tracking-[-0.6px]">
             Crie sua conta
           </h2>
@@ -46,81 +109,147 @@ export function SignUpPage() {
           </p>
 
           <AvatarUploadField />
-          <AuthField
+          <FormField
+            control={form.control}
+            name="name"
             className="mt-[19px]"
             id="signup-name"
             label="Nome completo *"
-            name="name"
             placeholder="Como você se chama?"
             autoComplete="name"
-            size="md"
-            required
+            maxLength={100}
+            disabled={submitting}
+            labelClassName={fieldLabelClassName}
+            fieldClassName={fieldClassName}
+            errorClassName={fieldErrorClassName}
           />
-          <AuthField
+          <FormField
+            control={form.control}
+            name="email"
             className="mt-[19px]"
             id="signup-email"
             label="E-mail *"
-            name="email"
             type="email"
             placeholder="seuemail@exemplo.com"
             autoComplete="email"
-            size="md"
-            required
+            maxLength={254}
+            disabled={submitting}
+            labelClassName={fieldLabelClassName}
+            fieldClassName={fieldClassName}
+            errorClassName={fieldErrorClassName}
           />
-          <PasswordField
+          <FormField
+            control={form.control}
+            name="password"
             className="mt-[19px]"
             id="signup-password"
             label="Senha *"
-            name="password"
+            type={showPassword ? 'text' : 'password'}
             placeholder="Crie uma senha"
             autoComplete="new-password"
-            hint={passwordRequirements}
-            minLength={8}
-            pattern="(?=.*[A-Za-z])(?=.*\d).{8,}"
-            title={passwordRequirements}
-            size="md"
-            required
+            maxLength={128}
+            description={passwordRequirements}
+            disabled={submitting}
+            labelClassName={fieldLabelClassName}
+            fieldClassName={`${fieldClassName} pr-12`}
+            descriptionClassName="text-[10px] leading-[1.6] text-auth-subtle"
+            errorClassName={fieldErrorClassName}
+            endAdornment={
+              <button
+                className="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-[7px] text-auth-muted transition hover:text-auth-accent focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-auth-focus"
+                type="button"
+                onClick={() => setShowPassword((visible) => !visible)}
+                aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                aria-pressed={showPassword}
+                disabled={submitting}
+              >
+                {showPassword ? (
+                  <EyeOff aria-hidden="true" className="size-[18px]" />
+                ) : (
+                  <Eye aria-hidden="true" className="size-[18px]" />
+                )}
+              </button>
+            }
           />
-          <AuthField
+          <FormField
+            control={form.control}
+            name="city"
             className="mt-[19px]"
             id="signup-city"
             label="Cidade *"
-            name="city"
             placeholder="São Paulo"
             autoComplete="address-level2"
-            size="md"
-            required
+            maxLength={100}
+            disabled={submitting}
+            labelClassName={fieldLabelClassName}
+            fieldClassName={fieldClassName}
+            errorClassName={fieldErrorClassName}
           />
-          <StateSelectField />
+          <FormField
+            control={form.control}
+            name="state"
+            as="select"
+            className="mt-[19px]"
+            id="signup-state"
+            label="Estado *"
+            placeholder="Selecione"
+            options={stateOptions}
+            autoComplete="address-level1"
+            description="Apenas bairro e cidade ficam públicos. Não pedimos seu endereço residencial."
+            disabled={submitting}
+            labelClassName={fieldLabelClassName}
+            fieldClassName={fieldClassName}
+            descriptionClassName="text-[10px] leading-[1.6] text-auth-subtle"
+            errorClassName={fieldErrorClassName}
+          />
 
-          <label className="mt-3.5 flex items-start gap-2 text-[11px] leading-[1.6] text-auth-muted">
-            <input
-              className="mt-[3px] size-4 shrink-0 accent-auth-accent"
-              type="checkbox"
-              name="terms"
-              required
-            />
-            <span>
-              Li e concordo com os{' '}
-              <a
-                className="text-auth-link underline underline-offset-2"
-                href="#termos-de-uso"
-              >
-                termos de uso
-              </a>{' '}
-              e a{' '}
-              <a
-                className="text-auth-link underline underline-offset-2"
-                href="#politica-de-privacidade"
-              >
-                política de privacidade
-              </a>
-              .
-            </span>
-          </label>
+          <FormField
+            control={form.control}
+            name="acceptedTerms"
+            id="signup-terms"
+            type="checkbox"
+            className="mt-3.5 grid-cols-[auto_1fr] items-start gap-x-2 gap-y-1"
+            labelClassName="col-start-2 block text-[11px] leading-[1.6] font-normal text-auth-muted"
+            fieldClassName="col-start-1 row-start-1 mt-[3px] size-4 min-w-4 rounded accent-auth-accent"
+            errorClassName="col-span-2 text-[11px] text-auth-danger"
+            disabled={submitting}
+            label={
+              <span>
+                Li e concordo com os{' '}
+                <a
+                  className="text-auth-link underline underline-offset-2"
+                  href="#termos-de-uso"
+                >
+                  termos de uso
+                </a>{' '}
+                e a{' '}
+                <a
+                  className="text-auth-link underline underline-offset-2"
+                  href="#politica-de-privacidade"
+                >
+                  política de privacidade
+                </a>
+                .
+              </span>
+            }
+          />
 
-          <AuthButton className="mt-[18px]" size="md" type="submit">
-            Criar conta
+          {form.formState.errors.root?.message ? (
+            <p
+              className="mt-4 rounded-lg bg-auth-soft-surface p-3 text-[11px] leading-[1.5] text-auth-danger"
+              role="alert"
+            >
+              {form.formState.errors.root.message}
+            </p>
+          ) : null}
+
+          <AuthButton
+            className="mt-[18px]"
+            size="md"
+            type="submit"
+            disabled={submitting}
+          >
+            {submitting ? 'Criando conta…' : 'Criar conta'}
           </AuthButton>
 
           <p className="mt-[17px] mb-0 text-center text-[11px] text-auth-muted">
@@ -135,7 +264,7 @@ export function SignUpPage() {
         </form>
 
         <SignUpFooter />
-      </div>
+      </AuthCardShell>
     </>
   )
 }

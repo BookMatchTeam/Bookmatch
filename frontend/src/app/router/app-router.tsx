@@ -32,6 +32,16 @@ export const appRouter = createBrowserRouter([
         },
       },
       {
+        path: paths.emailVerification,
+        lazy: async () => {
+          const { EmailVerificationPage } = await import(
+            '@/features/auth/email-verification/email-verification-page'
+          )
+
+          return { Component: EmailVerificationPage }
+        },
+      },
+      {
         path: paths.recoverPassword,
         lazy: async () => {
           const { RecoverPasswordPage } = await import(

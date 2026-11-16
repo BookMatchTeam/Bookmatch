@@ -1,5 +1,5 @@
 import type { FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { Link, useLocation, useNavigate } from 'react-router'
 
 import { paths } from '@/app/router/paths'
 import { AuthButton } from '@/features/auth/components/auth-button'
@@ -11,6 +11,8 @@ import { PasswordField } from '@/features/auth/components/password-field'
 
 export function SignInPage() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const notice = (location.state as { notice?: string } | null)?.notice
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -37,7 +39,16 @@ export function SignInPage() {
           Começar?
         </h1>
 
-        <form className="mt-[27px]" onSubmit={handleSubmit}>
+        {notice ? (
+          <p
+            className="mt-5 mb-0 rounded-lg bg-auth-success-surface p-3 text-xs leading-5 text-auth-success-ink"
+            role="status"
+          >
+            {notice}
+          </p>
+        ) : null}
+
+        <form className={notice ? 'mt-5' : 'mt-[27px]'} onSubmit={handleSubmit}>
           <AuthField
             id="signin-identity"
             label="Entre com seu nome de Usuário ou seu E-mail"
