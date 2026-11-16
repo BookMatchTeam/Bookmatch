@@ -179,70 +179,95 @@ Como ficou:
 
 ## Item 4 — ADRs em `docs/adr`
 
-Status: não iniciado.
+Status: concluído.
 
-O `ARCHITECTURE.md` prevê os ADRs, mas a pasta ainda não existe.
-
-- [ ] Criar `docs/adr` com um modelo de ADR (contexto, decisão, alternativas,
-      consequências).
-- [ ] ADR-001: arquitetura em camadas por domínio, formalizando o que está no
+- [x] Criar `docs/adr` com índice, regras de uso e modelo (contexto, decisão,
+      alternativas, consequências).
+- [x] ADR-001: arquitetura em camadas por domínio, formalizando o que está no
       `ARCHITECTURE.md`.
-- [ ] ADR-002: IDs UUID v7 gerados pela aplicação (decidido no item 3).
-- [ ] ADR-003: formato único de erro (decidido no item 2), incluindo as
+- [x] ADR-002: IDs UUID v7 gerados pela aplicação (decidido no item 3).
+- [x] ADR-003: formato único de erro (decidido no item 2), incluindo as
       alternativas descartadas: RFC 9457, `requestId`, `fieldErrors` e
       `success`.
-- [ ] ADR-004: estratégia de sessão e autenticação. Fica para o início do
+- [x] ADR-004: prefixo `/api` nas rotas da aplicação (decidido no item 5).
+- [ ] ADR-005: estratégia de sessão e autenticação. Fica para o início do
       domínio `auth`.
+
+### Decisões
+
+- ADRs são numerados, ficam em `docs/adr` e entram no mesmo pull request da
+  implementação.
+- Um ADR aceito não é reescrito: se a decisão mudar, um novo ADR o substitui.
 
 ## Item 5 — Prefixo global de rotas
 
-Status: não iniciado. Decisão pendente.
+Status: concluído. Registrado no [ADR-004](adr/004-prefixo-de-rotas-api.md).
 
-Hoje o Swagger está em `/api/docs`, mas as rotas não têm prefixo (`/health`).
+### Decisões
 
-Contexto: a API já tem domínio próprio (`api-bookmatch.galpao.tech`) no Caddy
-de borda, então um prefixo `/api` não é necessário para separar o tráfego do
-frontend. A decisão real é entre:
+- Rotas da aplicação sob `/api` (`API_PREFIX` em `configure-app.ts`).
+- Swagger continua em `/api/docs`.
+- `/health` fica fora do prefixo. Assim o healthcheck do Docker, o smoke test,
+  o CD e a documentação de deploy não mudaram.
+- Sem prefixo de versão (`/v1`) por ora.
 
-- sem prefixo, mantendo o Swagger em `/api/docs` ou movendo para `/docs`;
-- prefixo de versão, como `/v1/...`.
+### Tarefas
 
-Se o prefixo mudar, estes pontos dependem de `/health` e precisam ser
-atualizados juntos:
+- [x] Decidir a estratégia de prefixo e registrar a decisão.
+- [x] Aplicar o prefixo em `configure-app.ts`, excluindo `/health`.
+- [x] Testes e2e: rotas sob `/api`, rota sem prefixo dá 404, `/health` fora
+      do prefixo, Swagger em `/api/docs` (`test/routes.e2e-spec.ts`).
 
-- `deploy/compose.prod.yaml` (healthcheck);
-- `deploy/smoke-test.sh`;
-- `.github/workflows/backend-cd.yml`;
-- `test/health.e2e-spec.ts`;
-- `README.md` e `docs/deploy.md`.
+### Limitação conhecida
 
-Recomendação: manter `/health` sem prefixo em qualquer cenário, para não
-acoplar a infraestrutura à versão da API.
-
-- [ ] Decidir a estratégia de prefixo e registrar a decisão.
-- [ ] Aplicar o prefixo em `configure-app.ts`, excluindo `/health` se for o
-      caso.
-- [ ] Atualizar os pontos listados acima.
+O 404 no formato único só vale sob `/api`. Fora do prefixo, uma rota
+inexistente recebe o 404 em texto puro do adaptador HTTP. Detalhes no ADR-004.
 
 ## Item 6 — Testes de integração com Prisma
 
-Status: não iniciado.
+Status: concluído.
 
-O `ARCHITECTURE.md` prevê testes de integração para os adaptadores Prisma, mas
-ainda falta o ambiente.
+- [x] Definir o banco de teste: serviço `mariadb-test` no `compose.yaml`, no
+      profile `test`, porta `3307`, dados em memoria (`tmpfs`).
+- [x] Criar `vitest.config.integration.ts` e o script `test:integration`.
+- [x] Aplicar as migrations no banco de teste antes da suíte
+      (`test/support/integration-global-setup.ts`).
+- [x] Definir a estratégia de isolamento: `resetDatabase` apaga os dados de
+      todas as tabelas, exceto `_prisma_migrations`.
+- [x] Incluir os testes de integração no `backend-ci.yml`, com um serviço
+      MariaDB no job.
 
-- [ ] Definir o banco de teste (database separado no MariaDB do
-      `compose.yaml`).
-- [ ] Criar `vitest.config.integration.ts` e o script `test:integration`.
-- [ ] Aplicar as migrations no banco de teste antes da suíte.
-- [ ] Definir a estratégia de isolamento entre testes (limpeza por tabela ou
-      transação).
-- [ ] Incluir os testes de integração no `backend-ci.yml`.
+### Decisões
+
+- Arquivos `*.int-spec.ts`, ao lado do adaptador testado.
+- Variáveis próprias (`TEST_DATABASE_*`), com padrões que apontam para o
+  `mariadb-test`. O `.env` de desenvolvimento nunca é usado pela suíte.
+- Trava de segurança: a suíte recusa bancos cujo nome não termina em `_test`.
+- Arquivos rodam em sequência (`fileParallelism: false`), pois compartilham o
+  banco.
+- Isolamento por limpeza de tabelas, e não por transação: os adaptadores
+  podem abrir suas próprias transações, o que uma transação externa
+  impediria.
+
+### Como usar
+
+```bash
+npm run db:test:up
+npm run test:integration
+npm run db:test:down
+```
+
+## Verificação de tipos
+
+Os testes e os fakes de `src/shared/testing` ficavam fora de qualquer
+verificação de tipos: o build exclui specs e o Vitest não verifica tipos. O
+script `typecheck` (`tsc --noEmit` com o `tsconfig.json` completo) cobre todo o
+código e roda no CI.
 
 ## Fora do escopo
 
 - Qualquer caso de uso de domínio (`RegisterUser`, login, recuperação).
-- Autenticação, sessão e autorização. Ficam com o ADR-004.
+- Autenticação, sessão e autorização. Ficam com o ADR-005.
 - Logging estruturado, observabilidade e rate limiting. Entram quando houver
   necessidade concreta.
 
@@ -252,4 +277,4 @@ ainda falta o ambiente.
 - A aplicação não sobe com configuração inválida.
 - Todo erro da API segue o formato único.
 - `ARCHITECTURE.md` atualizado com `src/shared`, configuração e erros.
-- ADR-001, ADR-002 e ADR-003 aceitos.
+- ADR-001, ADR-002, ADR-003 e ADR-004 aceitos.

@@ -30,6 +30,24 @@ jobs:
       # O .env nao e versionado. O prisma7.config.ts exige DATABASE_URL para
       # carregar, mas o prisma generate nao se conecta ao banco.
       DATABASE_URL: mysql://ci:ci@localhost:3306/ci
+    # Banco dos testes de integracao, com os mesmos valores do servico
+    # mariadb-test do compose.yaml (padroes de test/support/test-database.ts).
+    services:
+      mariadb-test:
+        image: mariadb:11.8.9
+        env:
+          MARIADB_DATABASE: bookmatch_test
+          MARIADB_USER: bookmatch
+          MARIADB_PASSWORD: bookmatch_test
+          MARIADB_ROOT_PASSWORD: bookmatch_root_test
+        ports:
+          - 3307:3306
+        options: >-
+          --health-cmd "healthcheck.sh --connect --innodb_initialized"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+          --health-start-period 10s
     steps:
       - uses: actions/checkout@v5
 
@@ -42,9 +60,11 @@ jobs:
       - run: npm ci
       - run: npm run prisma:generate
       - run: npm run lint
+      - run: npm run typecheck
       - run: npm run build
       - run: npm test
       - run: npm run test:e2e
+      - run: npm run test:integration
 
       # Monta as imagens e liga banco, migrations e API como na VPS, chamando
       # o /health no fim. Pega antes do merge os erros que so apareceriam no

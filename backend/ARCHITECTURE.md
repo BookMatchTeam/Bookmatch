@@ -224,6 +224,21 @@ Os testes sao distribuidos por responsabilidade:
 - adaptadores Prisma e outras integracoes: testes de integracao;
 - endpoints HTTP: testes end-to-end.
 
+Cada tipo tem sua suite e seu comando:
+
+| Tipo | Arquivos | Comando |
+|---|---|---|
+| Unitario | `src/**/*.spec.ts` | `npm test` |
+| End-to-end | `test/**/*.e2e-spec.ts` | `npm run test:e2e` |
+| Integracao | `**/*.int-spec.ts` | `npm run test:integration` |
+
+Os testes e2e sobem a aplicacao completa com `createTestApp`
+(`test/support/test-app.ts`), sem banco. Os testes de integracao usam um
+MariaDB proprio (`npm run db:test:up`), recebem as migrations antes da suite e
+limpam os dados entre testes com `resetDatabase`
+(`test/support/test-database.ts`). A suite recusa bancos cujo nome nao termine
+em `_test`.
+
 Testes devem verificar comportamento observavel, evitando acoplamento a
 detalhes privados de implementacao.
 
@@ -235,6 +250,12 @@ uso, gateways e adaptadores concretos.
 Para preservar a independencia de `application`, casos de uso nao devem receber
 decorators do NestJS. Quando necessario, o modulo pode instancia-los por meio
 de providers com `useFactory`.
+
+## Rotas
+
+As rotas da aplicacao ficam sob o prefixo global `/api` (`API_PREFIX` em
+`configure-app.ts`). O Swagger fica em `/api/docs`. O `/health` fica fora do
+prefixo, porque a infraestrutura depende dele. Detalhes no ADR-004.
 
 ## Configuracao
 
@@ -315,5 +336,6 @@ Esta arquitetura e um ponto de partida, nao uma estrutura imutavel. Mudancas
 devem ser guiadas por casos de uso implementados e problemas observados.
 
 Decisoes arquiteturais relevantes, suas alternativas e consequencias devem ser
-registradas em ADRs dentro de `docs/adr`. O presente documento deve refletir a
-arquitetura vigente, enquanto os ADRs preservam o historico das decisoes.
+registradas em ADRs dentro de [`docs/adr`](docs/adr/README.md). O presente
+documento deve refletir a arquitetura vigente, enquanto os ADRs preservam o
+historico das decisoes.

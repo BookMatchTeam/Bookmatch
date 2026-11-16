@@ -50,7 +50,7 @@ describe('Formato de erro (e2e)', () => {
   it('traduz uma exception da aplicação pela categoria', async () => {
     const response = await testApp.request({
       method: 'GET',
-      url: '/test-errors/conflict',
+      url: '/api/test-errors/conflict',
     });
 
     expect(response.statusCode).toBe(409);
@@ -65,7 +65,7 @@ describe('Formato de erro (e2e)', () => {
   it('responde 500 genérico sem vazar detalhes internos', async () => {
     const response = await testApp.request({
       method: 'GET',
-      url: '/test-errors/unexpected',
+      url: '/api/test-errors/unexpected',
     });
 
     expect(response.statusCode).toBe(500);
@@ -80,7 +80,7 @@ describe('Formato de erro (e2e)', () => {
   it('responde 422 quando o corpo não passa na validação', async () => {
     const response = await testApp.request({
       method: 'POST',
-      url: '/test-errors/samples',
+      url: '/api/test-errors/samples',
       payload: { name: '' },
     });
 
@@ -95,7 +95,7 @@ describe('Formato de erro (e2e)', () => {
   it('responde 422 quando o corpo tem campos não permitidos', async () => {
     const response = await testApp.request({
       method: 'POST',
-      url: '/test-errors/samples',
+      url: '/api/test-errors/samples',
       payload: { name: 'livro', admin: true },
     });
 
@@ -106,7 +106,7 @@ describe('Formato de erro (e2e)', () => {
   it('aceita um corpo válido', async () => {
     const response = await testApp.request({
       method: 'POST',
-      url: '/test-errors/samples',
+      url: '/api/test-errors/samples',
       payload: { name: 'livro' },
     });
 
@@ -117,7 +117,7 @@ describe('Formato de erro (e2e)', () => {
   it('responde 400 para JSON malformado', async () => {
     const response = await testApp.request({
       method: 'POST',
-      url: '/test-errors/samples',
+      url: '/api/test-errors/samples',
       headers: { 'content-type': 'application/json' },
       payload: '{"name":',
     });
@@ -143,10 +143,10 @@ describe('Formato de erro (e2e)', () => {
     });
   });
 
-  it('responde 404 no formato único para rota inexistente', async () => {
+  it('responde 404 no formato único para rota inexistente sob /api', async () => {
     const response = await testApp.request({
       method: 'GET',
-      url: '/rota-inexistente',
+      url: '/api/rota-inexistente',
     });
 
     expect(response.statusCode).toBe(404);
