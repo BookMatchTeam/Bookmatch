@@ -12,7 +12,7 @@ export function AuthThemeToggle({
 
   return (
     <button
-      className="auth-theme-toggle"
+      className="absolute top-[13px] right-[13px] z-30 grid size-[34px] place-items-center rounded-full border border-auth-border bg-auth-surface p-0 text-auth-ink shadow-[var(--auth-toggle-shadow)] transition hover:bg-auth-soft-surface [&_svg]:size-[17px]"
       type="button"
       onClick={onToggle}
       aria-label={`Ativar modo ${isDark ? 'claro' : 'escuro'}`}

@@ -37,7 +37,7 @@ const brazilianStates = [
 ] as const
 
 const fieldClassName =
-  'auth-input h-[49px] w-full rounded-[7px] border border-[#819fac] bg-white px-3.5 text-base text-[#18364b] outline-none transition placeholder:text-[#81909a] focus:border-[#0794b1] focus:ring-2 focus:ring-[#0794b1]/20'
+  'h-[49px] w-full rounded-[7px] border border-auth-border bg-auth-surface px-3.5 text-base text-auth-ink outline-none transition placeholder:text-auth-subtle focus:border-auth-focus focus:ring-2 focus:ring-auth-focus/20'
 
 export function SignUpPage() {
   const navigate = useNavigate()
@@ -78,11 +78,11 @@ export function SignUpPage() {
   }
 
   return (
-    <div className={`auth-screen auth-signup ${isDark ? 'auth-dark' : 'auth-light'} min-h-svh [font-family:Arial,sans-serif]`}>
-      <div className="auth-page mx-auto min-h-[1638px] w-full max-w-[390px] overflow-hidden px-[18px] shadow-[0_0_40px_rgba(20,54,74,0.06)]">
-        <header className="auth-signup-header mx-[-18px] flex h-[87px] items-center justify-between border-b border-[#c3d6df] bg-[#f9fcfe] px-5 py-2">
+    <div className={`auth-screen ${isDark ? 'auth-dark' : 'auth-light'} min-h-svh bg-auth-page text-auth-ink [font-family:Arial,sans-serif]`}>
+      <div className="mx-auto min-h-[1638px] w-full max-w-[390px] overflow-hidden bg-auth-page-surface px-[18px] text-auth-ink shadow-[var(--auth-page-shadow)]">
+        <header className="mx-[-18px] flex h-[87px] items-center justify-between border-b border-auth-divider bg-auth-header px-5 py-2">
           <Link
-            className="rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0794b1]"
+            className="rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-auth-focus"
             to={paths.signIn}
             aria-label="BookMatch — ir para o login"
           >
@@ -95,10 +95,10 @@ export function SignUpPage() {
             />
           </Link>
 
-          <span className="auth-muted text-[11px] text-[#667b88]">
+          <span className="text-[11px] text-auth-muted">
             Já faz parte?{' '}
             <Link
-              className="auth-header-link ml-2 inline-block rounded-md border border-[#c9d6dd] bg-white p-2.5 text-[#19344a] no-underline transition hover:border-[#94afbb] hover:bg-[#f7fbfd] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0794b1]"
+              className="ml-2 inline-block rounded-md border border-auth-divider bg-auth-card p-2.5 text-auth-ink no-underline transition hover:border-auth-border-hover hover:bg-auth-soft-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-auth-focus"
               to={paths.signIn}
             >
               Entrar
@@ -107,7 +107,7 @@ export function SignUpPage() {
         </header>
 
         <section className="px-[7px] pt-[25px] pb-5">
-          <p className="auth-accent m-0 text-[10px] tracking-[0.03em] text-[#17738b]">
+          <p className="m-0 text-[10px] text-auth-accent tracking-[0.03em]">
             HISTÓRIAS BOAS MERECEM CIRCULAR
           </p>
           <h1 className="mt-[15px] mb-3 text-[27px] leading-[1.27] font-bold tracking-[-0.8px]">
@@ -115,7 +115,7 @@ export function SignUpPage() {
             <br />
             novas companhias.
           </h1>
-          <p className="auth-muted my-2.5 text-[13px] leading-[1.6] text-[#607482]">
+          <p className="my-2.5 text-[13px] leading-[1.6] text-auth-muted">
             Compartilhe livros físicos, descubra leitores por perto e faça parte
             de uma comunidade que lê junto.
           </p>
@@ -130,26 +130,26 @@ export function SignUpPage() {
         />
 
         <form
-          className="auth-form-card relative rounded-[13px] border border-[#c5d6e0] bg-white px-3.5 py-[18px] shadow-[0_3px_9px_rgba(23,63,80,0.06)]"
+          className="relative rounded-[13px] border border-auth-divider bg-auth-card px-3.5 py-[18px] text-auth-ink shadow-[var(--auth-form-shadow)]"
           onSubmit={handleSubmit}
         >
           <AuthThemeToggle theme={theme} onToggle={() => setTheme(isDark ? 'light' : 'dark')} />
           <h2 className="mt-[7px] mb-3 text-[23px] font-bold tracking-[-0.6px]">
             Crie sua conta
           </h2>
-          <p className="auth-muted my-2.5 text-[13px] leading-[1.6] text-[#607482]">
+          <p className="my-2.5 text-[13px] leading-[1.6] text-auth-muted">
             Seu próximo capítulo começa aqui.
           </p>
 
-          <label className="auth-upload flex cursor-pointer items-center gap-3 rounded-lg bg-[#f3fafb] p-3 text-xs text-[#27768a] transition hover:bg-[#eaf6f7] focus-within:ring-2 focus-within:ring-[#0794b1]/30">
+          <label className="flex cursor-pointer items-center gap-3 rounded-lg bg-auth-soft-surface p-3 text-xs text-auth-label transition hover:bg-auth-soft-hover focus-within:ring-2 focus-within:ring-auth-focus/30">
             <Camera aria-hidden="true" className="size-7 shrink-0" />
             <span className="min-w-0">
               Adicionar foto · opcional
-              <small className="auth-subtle mt-1 block text-[10px] text-[#7d909a]">
+              <small className="mt-1 block text-[10px] text-auth-subtle">
                 JPG ou PNG, até 5 MB. Pode ser depois.
               </small>
               {photoName ? (
-                <small className="auth-accent mt-1 block truncate text-[10px] font-semibold text-[#27768a]">
+                <small className="mt-1 block truncate text-[10px] font-semibold text-auth-accent">
                   {photoName}
                 </small>
               ) : null}
@@ -165,7 +165,7 @@ export function SignUpPage() {
           </label>
           {photoError ? (
             <p
-              className="mt-2 mb-0 text-[11px] text-[#a33b34]"
+              className="mt-2 mb-0 text-[11px] text-auth-danger"
               id="photo-error"
               role="alert"
             >
@@ -199,7 +199,7 @@ export function SignUpPage() {
             autoComplete="new-password"
             minLength={8}
           />
-          <p className="auth-subtle my-2 text-[10px] leading-[1.6] text-[#798b97]">
+          <p className="my-2 text-[10px] leading-[1.6] text-auth-subtle">
             Use pelo menos 8 caracteres, com letras e números.
           </p>
 
@@ -212,13 +212,13 @@ export function SignUpPage() {
           />
 
           <label
-            className="auth-field-label mt-[19px] mb-2 block text-[11px] text-[#4f6575]"
+            className="mt-[19px] mb-2 block text-[11px] text-auth-label"
             htmlFor="signup-state"
           >
             Estado *
           </label>
           <select
-            className={`${fieldClassName} appearance-none bg-[linear-gradient(45deg,transparent_50%,#567382_50%),linear-gradient(135deg,#567382_50%,transparent_50%)] bg-[position:calc(100%-18px)_21px,calc(100%-13px)_21px] bg-[size:5px_5px,5px_5px] bg-no-repeat pr-10`}
+            className={`${fieldClassName} appearance-none [background-image:linear-gradient(45deg,transparent_50%,var(--auth-select-arrow)_50%),linear-gradient(135deg,var(--auth-select-arrow)_50%,transparent_50%)] bg-[position:calc(100%-18px)_21px,calc(100%-13px)_21px] bg-[size:5px_5px,5px_5px] bg-no-repeat pr-10`}
             id="signup-state"
             name="state"
             autoComplete="address-level1"
@@ -234,14 +234,14 @@ export function SignUpPage() {
               </option>
             ))}
           </select>
-          <p className="auth-subtle my-2 text-[10px] leading-[1.6] text-[#798b97]">
+          <p className="my-2 text-[10px] leading-[1.6] text-auth-subtle">
             Apenas bairro e cidade ficam públicos. Não pedimos seu endereço
             residencial.
           </p>
 
-          <label className="auth-muted mt-3.5 flex items-start gap-2 text-[11px] leading-[1.6] text-[#637786]">
+          <label className="mt-3.5 flex items-start gap-2 text-[11px] leading-[1.6] text-auth-muted">
             <input
-              className="mt-[3px] size-4 shrink-0 accent-[#087e93]"
+              className="mt-[3px] size-4 shrink-0 accent-auth-accent"
               type="checkbox"
               name="terms"
               required
@@ -249,14 +249,14 @@ export function SignUpPage() {
             <span>
               Li e concordo com os{' '}
               <a
-                className="auth-link text-[#176e87] underline underline-offset-2"
+                className="text-auth-link underline underline-offset-2"
                 href="#termos-de-uso"
               >
                 termos de uso
               </a>{' '}
               e a{' '}
               <a
-                className="auth-link text-[#176e87] underline underline-offset-2"
+                className="text-auth-link underline underline-offset-2"
                 href="#politica-de-privacidade"
               >
                 política de privacidade
@@ -266,16 +266,16 @@ export function SignUpPage() {
           </label>
 
           <button
-            className="auth-primary-button mt-[18px] h-[45px] w-full rounded-[7px] border-0 bg-[#03223f] text-xs font-semibold text-white transition hover:bg-[#073152] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0794b1] active:translate-y-px"
+            className="mt-[18px] h-[45px] w-full rounded-[7px] border-0 bg-auth-primary text-xs font-semibold text-white transition hover:bg-auth-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-auth-focus active:translate-y-px"
             type="submit"
           >
             Criar conta
           </button>
 
-          <p className="auth-muted mt-[17px] mb-0 text-center text-[11px] text-[#607482]">
+          <p className="mt-[17px] mb-0 text-center text-[11px] text-auth-muted">
             Já tem uma conta?{' '}
             <Link
-              className="auth-link font-semibold text-[#176e87] underline underline-offset-2"
+              className="font-semibold text-auth-link underline underline-offset-2"
               to={paths.signIn}
             >
               Entrar
@@ -283,7 +283,7 @@ export function SignUpPage() {
           </p>
         </form>
 
-        <section className="auth-reading-note mt-6 flex gap-[13px] border-t border-[#d5e2e7] py-6">
+        <section className="mt-6 flex gap-[13px] border-t border-auth-divider py-6">
           <img
             className="h-[95px] w-[100px] shrink-0 object-contain"
             src="/brand/bookmatch-login-bottom.svg"
@@ -295,19 +295,19 @@ export function SignUpPage() {
             <h2 className="m-0 text-sm font-bold">
               Mais leituras. Mais encontros.
             </h2>
-            <p className="auth-muted my-2.5 text-[11px] leading-[1.6] text-[#607482]">
+            <p className="my-2.5 text-[11px] leading-[1.6] text-auth-muted">
               Empréstimos, doações e trocas. Cada livro, uma nova história.
             </p>
           </div>
         </section>
 
-        <footer className="auth-footer px-2.5 py-3 text-[10px] leading-[1.7] text-[#71818c]">
+        <footer className="px-2.5 py-3 text-[10px] leading-[1.7] text-auth-subtle">
           <ShieldCheck
             aria-hidden="true"
-            className="size-[29px] text-[#247e94]"
+            className="size-[29px] text-auth-accent"
             strokeWidth={1.6}
           />
-          <p className="auth-subtle my-2.5 text-[10px] leading-[1.7] text-[#71818c]">
+          <p className="my-2.5 text-[10px] leading-[1.7] text-auth-subtle">
             Livros físicos, sem pagamentos. Combine entregas em locais públicos e
             pelo chat.
           </p>
@@ -340,7 +340,7 @@ function FormField({
   return (
     <>
       <label
-        className="auth-field-label mt-[19px] mb-2 block text-[11px] text-[#4f6575]"
+        className="mt-[19px] mb-2 block text-[11px] text-auth-label"
         htmlFor={id}
       >
         {label}

@@ -23,7 +23,7 @@ export function SignInPage() {
   }
 
   return (
-    <div className={`auth-screen ${isDark ? 'auth-dark' : 'auth-light'} relative min-h-svh overflow-hidden [font-family:Arial,sans-serif]`}>
+    <div className={`auth-screen ${isDark ? 'auth-dark' : 'auth-light'} relative min-h-svh overflow-hidden bg-auth-page text-auth-ink [font-family:Arial,sans-serif]`}>
       <div className="relative mx-auto min-h-[876px] w-full max-w-[375px] overflow-hidden px-4 pt-[97px] sm:px-6">
         <img
           className="pointer-events-none absolute top-[9px] left-1/2 z-20 h-[119px] w-[146px] -translate-x-1/2 select-none"
@@ -42,12 +42,12 @@ export function SignInPage() {
           aria-hidden="true"
         />
 
-        <section className="auth-panel relative z-10 mx-auto min-h-[724px] w-full max-w-[327px] rounded-[36px] px-[27px] pt-[57px] pb-10 shadow-[0_13px_30px_rgba(0,22,35,0.05)]">
+        <section className="relative z-10 mx-auto min-h-[724px] w-full max-w-[327px] rounded-[36px] bg-auth-card px-[27px] pt-[57px] pb-10 text-auth-ink shadow-[var(--auth-panel-shadow-soft)]">
           <AuthThemeToggle theme={theme} onToggle={() => setTheme(isDark ? 'light' : 'dark')} />
-          <p className="auth-body-text m-0 whitespace-nowrap text-[14.5px] tracking-[-0.25px] max-[350px]:text-[13px]">
+          <p className="m-0 whitespace-nowrap text-[14.5px] text-auth-ink tracking-[-0.25px] max-[350px]:text-[13px]">
             Olá, seja bem vindo ao{' '}
-            <strong className="font-extrabold text-[#936218] italic">
-              Book<span className="text-[#007fa1]">Match</span>
+            <strong className="font-extrabold text-auth-brand-gold italic">
+              Book<span className="text-auth-brand-match">Match</span>
             </strong>
           </p>
 
@@ -59,13 +59,13 @@ export function SignInPage() {
 
           <form className="mt-[27px]" onSubmit={handleSubmit}>
             <label
-              className="auth-field-label block text-xs leading-[18px] font-medium text-[#35536e]"
+              className="block text-xs leading-[18px] font-medium text-auth-label"
               htmlFor="signin-identity"
             >
               Entre com seu nome de Usuário ou seu E-mail
             </label>
             <input
-              className="auth-input mt-[13px] h-14 w-full rounded-xl border-[1.2px] border-[#9fcaca] bg-[#fbfefd] px-[15px] text-base text-[#071f34] outline-none transition placeholder:text-[#708195] focus:border-[#078fa7] focus:ring-[3px] focus:ring-[#0498ab]/12"
+              className="mt-[13px] h-14 w-full rounded-xl border-[1.2px] border-auth-border bg-auth-surface px-[15px] text-base text-auth-ink outline-none transition placeholder:text-auth-subtle focus:border-auth-focus focus:ring-[3px] focus:ring-auth-focus-ring/12"
               id="signin-identity"
               name="identity"
               type="text"
@@ -75,14 +75,14 @@ export function SignInPage() {
             />
 
             <label
-              className="auth-field-label mt-[23px] block text-xs leading-[18px] font-medium text-[#35536e]"
+              className="mt-[23px] block text-xs leading-[18px] font-medium text-auth-label"
               htmlFor="signin-password"
             >
               Insira sua senha
             </label>
             <div className="relative mt-[14px]">
               <input
-                className="auth-input h-14 w-full rounded-xl border-[1.2px] border-[#9fcaca] bg-[#fbfefd] px-[15px] pr-12 text-base text-[#071f34] outline-none transition placeholder:text-[#708195] focus:border-[#078fa7] focus:ring-[3px] focus:ring-[#0498ab]/12"
+                className="h-14 w-full rounded-xl border-[1.2px] border-auth-border bg-auth-surface px-[15px] pr-12 text-base text-auth-ink outline-none transition placeholder:text-auth-subtle focus:border-auth-focus focus:ring-[3px] focus:ring-auth-focus-ring/12"
                 id="signin-password"
                 name="password"
                 type={showPassword ? 'text' : 'password'}
@@ -91,7 +91,7 @@ export function SignInPage() {
                 required
               />
               <button
-                className="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-xl text-[#55758a] transition hover:text-[#087e98] focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-[#078fa7]"
+                className="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-xl text-auth-muted transition hover:text-auth-accent focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-auth-focus"
                 type="button"
                 onClick={() => setShowPassword((visible) => !visible)}
                 aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
@@ -107,7 +107,7 @@ export function SignInPage() {
 
             <div className="mt-[7px] flex justify-end">
               <Link
-                className="auth-link text-xs font-semibold text-[#087e98] no-underline hover:underline focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#078fa7]"
+                className="text-xs font-semibold text-auth-link no-underline hover:underline focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-auth-focus"
                 to={paths.recoverPassword}
               >
                 Esqueci minha senha
@@ -115,28 +115,28 @@ export function SignInPage() {
             </div>
 
             <button
-              className="auth-primary-button mt-[21px] h-[55px] w-full rounded-xl border-0 bg-[#03223f] text-base font-semibold text-white shadow-[0_6px_14px_rgba(3,34,63,0.16)] transition hover:bg-[#073152] focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#38acb8] active:translate-y-px"
+              className="mt-[21px] h-[55px] w-full rounded-xl border-0 bg-auth-primary text-base font-semibold text-white shadow-[var(--auth-button-shadow)] transition hover:bg-auth-primary-hover focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-auth-focus-outline active:translate-y-px"
               type="submit"
             >
               Entrar
             </button>
 
-            <p className="auth-muted mt-[15px] mb-0 whitespace-nowrap text-center text-[12.5px] text-[#60758a] max-[350px]:text-[11px]">
+            <p className="mt-[15px] mb-0 whitespace-nowrap text-center text-[12.5px] text-auth-muted max-[350px]:text-[11px]">
               Não possui uma conta?{' '}
               <Link
-                className="auth-link font-bold text-[#05718f] underline underline-offset-2"
+                className="font-bold text-auth-link underline underline-offset-2"
                 to={paths.signUp}
               >
                 Faça seu cadastro
               </Link>
             </p>
 
-            <p className="auth-field-label mt-[26px] mb-0 text-[13.5px] font-semibold text-[#35536e]">
+            <p className="mt-[26px] mb-0 text-[13.5px] font-semibold text-auth-label">
               Ou continue com:
             </p>
 
             <button
-              className="auth-social-button mt-[15px] flex h-[55px] w-full items-center justify-center gap-[11px] rounded-[11px] border-0 bg-[#e8f2fc] px-[17px] text-[13px] font-medium text-[#061b2f] transition hover:-translate-y-px hover:bg-[#dfeefa] focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#38acb8]"
+              className="mt-[15px] flex h-[55px] w-full items-center justify-center gap-[11px] rounded-[11px] border-0 bg-auth-social-surface px-[17px] text-[13px] font-medium text-auth-ink transition hover:-translate-y-px hover:bg-auth-social-hover focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-auth-focus-outline"
               type="button"
               onClick={() => navigate(paths.discovery)}
             >
@@ -200,7 +200,7 @@ export function RecoverPasswordPage() {
   }
 
   return (
-    <div className={`auth-screen ${isDark ? 'auth-dark' : 'auth-light'} relative min-h-svh overflow-hidden [font-family:Arial,sans-serif]`}>
+    <div className={`auth-screen ${isDark ? 'auth-dark' : 'auth-light'} relative min-h-svh overflow-hidden bg-auth-page text-auth-ink [font-family:Arial,sans-serif]`}>
       <div className="relative mx-auto min-h-[876px] w-full max-w-[375px] overflow-hidden px-4 pt-[97px] sm:px-6">
         <img
           className="pointer-events-none absolute top-[9px] left-1/2 z-20 h-[119px] w-[146px] -translate-x-1/2 select-none"
@@ -218,27 +218,27 @@ export function RecoverPasswordPage() {
           aria-hidden="true"
         />
 
-        <section className="auth-panel relative z-10 mx-auto min-h-[724px] w-full max-w-[327px] rounded-[36px] px-[27px] pt-[54px] pb-10 shadow-[0_13px_30px_rgba(0,0,0,0.12)]">
+        <section className="relative z-10 mx-auto min-h-[724px] w-full max-w-[327px] rounded-[36px] bg-auth-card px-[27px] pt-[54px] pb-10 text-auth-ink shadow-[var(--auth-panel-shadow-strong)]">
           <AuthThemeToggle theme={theme} onToggle={() => setTheme(isDark ? 'light' : 'dark')} />
-          <p className="auth-accent m-0 text-[12px] font-semibold tracking-[0.04em] text-[#087e93] uppercase">
+          <p className="m-0 text-[12px] font-semibold text-auth-accent tracking-[0.04em] uppercase">
             Vamos recuperar seu acesso
           </p>
-          <h1 className="mt-[18px] mb-0 text-[35px] leading-[1.13] font-semibold tracking-[-1px] text-[#081c34]">
+          <h1 className="mt-[18px] mb-0 text-[35px] leading-[1.13] font-semibold text-auth-ink tracking-[-1px]">
             Esqueceu sua
             <br />
             senha?
           </h1>
-          <p className="auth-muted mt-4 mb-0 text-[13px] leading-[1.65] text-[#607482]">
+          <p className="mt-4 mb-0 text-[13px] leading-[1.65] text-auth-muted">
             Sem problemas! Informe o e-mail cadastrado e enviaremos as
             instruções para recuperar sua conta.
           </p>
 
-          <div className="auth-soft-panel mt-6 flex items-center gap-3 rounded-xl bg-[#eef7f8] p-3.5 text-[12px] leading-[1.5] text-[#35536e]">
-            <span className="auth-icon-surface grid size-11 shrink-0 place-items-center rounded-full bg-white text-[#087e93] shadow-sm">
+          <div className="mt-6 flex items-center gap-3 rounded-xl bg-auth-soft-surface p-3.5 text-[12px] leading-[1.5] text-auth-label">
+            <span className="grid size-11 shrink-0 place-items-center rounded-full bg-auth-card text-auth-accent shadow-sm">
               <KeyRound aria-hidden="true" className="size-5" />
             </span>
             <span>
-              <strong className="auth-body-text mb-0.5 block text-[13px] text-[#17364d]">
+              <strong className="mb-0.5 block text-[13px] text-auth-ink">
                 Estamos aqui para ajudar!
               </strong>
               É rápido e seguro voltar à sua estante.
@@ -247,13 +247,13 @@ export function RecoverPasswordPage() {
 
           <form className="mt-7" onSubmit={handleSubmit}>
             <label
-              className="auth-field-label mb-2 block text-xs font-medium text-[#35536e]"
+              className="mb-2 block text-xs font-medium text-auth-label"
               htmlFor="recover-email"
             >
               Seu e-mail
             </label>
             <input
-              className="auth-input h-14 w-full rounded-xl border border-[#9fcaca] bg-[#fbfefd] px-[15px] text-base text-[#071f34] outline-none transition placeholder:text-[#708195] focus:border-[#078fa7] focus:ring-[3px] focus:ring-[#0498ab]/12"
+              className="h-14 w-full rounded-xl border border-auth-border bg-auth-surface px-[15px] text-base text-auth-ink outline-none transition placeholder:text-auth-subtle focus:border-auth-focus focus:ring-[3px] focus:ring-auth-focus-ring/12"
               id="recover-email"
               name="email"
               type="email"
@@ -263,7 +263,7 @@ export function RecoverPasswordPage() {
             />
 
             <button
-              className="auth-primary-button mt-5 h-[54px] w-full rounded-[10px] border-0 bg-[#03223f] text-sm font-semibold text-white shadow-[0_4px_13px_rgba(6,38,55,0.18)] transition hover:bg-[#073152] focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#38acb8] active:translate-y-px"
+              className="mt-5 h-[54px] w-full rounded-[10px] border-0 bg-auth-primary text-sm font-semibold text-white shadow-[var(--auth-button-shadow)] transition hover:bg-auth-primary-hover focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-auth-focus-outline active:translate-y-px"
               type="submit"
             >
               Enviar link de recuperação
@@ -271,7 +271,7 @@ export function RecoverPasswordPage() {
           </form>
 
           <div
-            className="auth-success-panel mt-4 flex gap-2.5 rounded-lg bg-[#e9f7f2] p-3 text-[11px] leading-[1.55] text-[#224d50]"
+            className="mt-4 flex gap-2.5 rounded-lg bg-auth-success-surface p-3 text-[11px] leading-[1.55] text-auth-success-ink"
             role={submitted ? 'status' : undefined}
             aria-live="polite"
           >
@@ -286,9 +286,9 @@ export function RecoverPasswordPage() {
             </span>
           </div>
 
-          <div className="mt-7 border-t border-[#e4ecee] pt-5 text-center">
+          <div className="mt-7 border-t border-auth-divider pt-5 text-center">
             <Link
-              className="auth-link text-xs font-semibold text-[#087e98] no-underline hover:underline focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#078fa7]"
+              className="text-xs font-semibold text-auth-link no-underline hover:underline focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-auth-focus"
               to={paths.signIn}
             >
               ← Voltar para o login
