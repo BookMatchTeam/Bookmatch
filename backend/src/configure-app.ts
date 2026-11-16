@@ -1,6 +1,9 @@
-import { ValidationPipe } from '@nestjs/common';
+import { HttpStatus, ValidationPipe } from '@nestjs/common';
 import type { INestApplication } from '@nestjs/common';
+import { HttpAdapterHost } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { ApiErrorResponse } from './shared/infra/http/api-error-response.js';
+import { GlobalExceptionFilter } from './shared/infra/http/global-exception.filter.js';
 
 export function configureApp(app: INestApplication): void {
   app.useGlobalPipes(
@@ -8,8 +11,11 @@ export function configureApp(app: INestApplication): void {
       whitelist: true,
       forbidNonWhitelisted: true,
       transform: true,
+      errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
     }),
   );
+
+  app.useGlobalFilters(new GlobalExceptionFilter(app.get(HttpAdapterHost)));
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('BookMatch API')
@@ -18,7 +24,9 @@ export function configureApp(app: INestApplication): void {
     .build();
 
   const documentFactory = () =>
-    SwaggerModule.createDocument(app, swaggerConfig);
+    SwaggerModule.createDocument(app, swaggerConfig, {
+      extraModels: [ApiErrorResponse],
+    });
 
   SwaggerModule.setup('api/docs', app, documentFactory);
 }

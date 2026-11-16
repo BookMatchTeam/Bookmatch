@@ -63,46 +63,98 @@ primeiro comportamento precisar distinguir os ambientes.
 
 ## Item 2 — Tratamento de erros padronizado
 
-Status: não iniciado.
+Status: concluído.
 
 Problema: o `ARCHITECTURE.md` diz que a infraestrutura traduz as exceptions da
 aplicação para HTTP, mas esse mecanismo ainda não existe.
 
-Proposta:
+### Decisões
 
-- uma `ApplicationException` base, em TypeScript puro, com um `code` estável
-  (ex.: `EMAIL_ALREADY_REGISTERED`);
-- um filtro global que mapeia `code` para status HTTP;
-- um formato único de resposta de erro, para o frontend tratar todos os erros
-  do mesmo jeito.
+- **Modelo:** uma única classe base, `ApplicationException`, com `code` e
+  `kind`. Cada domínio estende a base; a `kind` define a categoria da falha e
+  o filtro global traduz a categoria para o status HTTP. Não há tabela de
+  mapeamento por domínio.
+- **Formato:** próprio, com três campos. O padrão RFC 9457 (Problem Details)
+  foi avaliado e descartado: `type`, `title`, `detail` e `instance` não
+  acrescentam informação para uma API com um único frontend.
+- **Sem `requestId`, `fieldErrors` ou `success`.** O status HTTP já indica
+  sucesso ou falha, e a validação por campo fica com o frontend.
+- **Validação de DTO responde `422`**, e não o `400` padrão do NestJS. O `400`
+  fica para requisições malformadas, como JSON inválido.
+- **Mensagens em português**, seguras para exibir ao usuário. O cliente decide
+  o comportamento pelo `code`, nunca pelo texto.
 
-Formato de resposta a validar:
+### Formato
 
 ```json
 {
+  "statusCode": 409,
   "code": "EMAIL_ALREADY_REGISTERED",
-  "message": "E-mail já cadastrado",
-  "details": []
+  "message": "Este e-mail já está cadastrado."
 }
 ```
 
-- [ ] Criar a `ApplicationException` base sem dependência de NestJS.
-- [ ] Definir como cada domínio registra o mapeamento `code -> status HTTP`.
-- [ ] Criar o filtro global e registrá-lo em `configure-app.ts`.
-- [ ] Padronizar os erros de validação do `ValidationPipe` no mesmo formato
-      (ex.: `code: "VALIDATION_FAILED"` com os campos em `details`).
-- [ ] Tratar erros não esperados como `500` sem vazar detalhes internos.
-- [ ] Documentar o formato de erro no Swagger.
-- [ ] Testes unitários do filtro e teste e2e de um erro de validação.
+| Campo | Para quê |
+|---|---|
+| `statusCode` | O status HTTP, também disponível para quem só tem o corpo |
+| `code` | Identificador estável, para o cliente decidir o que fazer |
+| `message` | Texto seguro para exibir ao usuário |
+
+### Tradução para HTTP
+
+| Origem | Status | `code` |
+|---|---|---|
+| `kind: 'not_found'` | 404 | Do domínio |
+| `kind: 'conflict'` | 409 | Do domínio |
+| `kind: 'unauthenticated'` | 401 | Do domínio |
+| `kind: 'forbidden'` | 403 | Do domínio |
+| `kind: 'invalid_input'` | 422 | Do domínio |
+| `kind: 'business_rule'` | 422 | Do domínio |
+| Validação de DTO (`ValidationPipe`) | 422 | `VALIDATION_ERROR` |
+| JSON malformado | 400 | `BAD_REQUEST` |
+| Rota inexistente | 404 | `NOT_FOUND` |
+| Outros `HttpException` 4xx do framework | O mesmo | Pelo status, ou `REQUEST_ERROR` |
+| Qualquer outro erro, ou `HttpException` 5xx | 500 | `INTERNAL_ERROR` |
+
+Nos erros do framework, a mensagem original (técnica e em inglês, como
+`Cannot GET /rota`) é substituída por uma mensagem segura. No `500`, a
+resposta é sempre genérica; a rota e o stack completo vão somente para o log.
+
+### Tarefas
+
+- [x] Criar a `ApplicationException` base sem dependência de NestJS.
+- [x] Traduzir a `kind` para status HTTP no filtro global, com verificação de
+      tipo garantindo que toda `kind` tenha um status.
+- [x] Criar o filtro global e registrá-lo em `configure-app.ts`.
+- [x] Padronizar os erros de validação do `ValidationPipe` no mesmo formato.
+- [x] Tratar erros não esperados como `500` sem vazar detalhes internos.
+- [x] Documentar o formato de erro no Swagger (schema `ApiErrorResponse`).
+- [x] Testes unitários da exception e do filtro; testes e2e de exception da
+      aplicação, erro inesperado, validação, JSON malformado, rota inexistente
+      e Swagger.
+
+### Como ficou
+
+- `src/shared/application/exceptions/application.exception.ts`: a base
+  `ApplicationException` e o tipo `ApplicationExceptionKind`.
+- `src/shared/infra/http/global-exception.filter.ts`: o filtro global.
+- `src/shared/infra/http/api-error-response.ts`: o formato único, com schema
+  no Swagger.
+- `test/support/test-app.ts`: sobe a aplicação completa para os testes e2e,
+  agora compartilhado entre os arquivos de e2e.
+
+Pendente para o frontend: o `frontend/docs/contrato-api.md` ainda descreve o
+formato antigo (`fieldErrors` e `requestId`) e precisa ser alinhado a este.
 
 ## Item 3 — Pasta `src/shared/` mínima
 
-Status: não iniciado.
+Status: em andamento.
 
 Proposta: conter somente o que já é comum a todos os domínios, seguindo a
 regra do `ARCHITECTURE.md` de não antecipar abstrações.
 
-- [ ] Mover a `ApplicationException` base para `src/shared/application`.
+- [x] Mover a `ApplicationException` base para `src/shared/application`
+      (criada diretamente lá no item 2).
 - [ ] Criar o contrato `IdGenerator` e sua implementação na infraestrutura.
 - [ ] Criar o contrato `Clock` e sua implementação na infraestrutura.
 - [ ] Criar implementações fixas (fakes) de `IdGenerator` e `Clock` para os

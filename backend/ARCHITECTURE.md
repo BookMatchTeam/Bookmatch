@@ -158,13 +158,55 @@ resultado de repeticao real, nao de antecipacao.
 Exceptions da aplicacao descrevem falhas do dominio ou do caso de uso, sem
 conhecer codigos HTTP.
 
+Toda falha esperada estende `ApplicationException`
+(`src/shared/application/exceptions`) e define:
+
+- `code`: identificador estavel, em `UPPER_SNAKE_CASE`, que o cliente usa para
+  decidir o que fazer. Nunca muda depois de publicado;
+- `kind`: a categoria da falha (`not_found`, `conflict`, `unauthenticated`,
+  `forbidden`, `invalid_input` ou `business_rule`);
+- a mensagem, segura para exibir ao usuario e escrita em portugues.
+
+```ts
+export class EmailAlreadyRegisteredException extends ApplicationException {
+  readonly code = 'EMAIL_ALREADY_REGISTERED';
+  readonly kind = 'conflict';
+
+  constructor() {
+    super('Este e-mail já está cadastrado.');
+  }
+}
+```
+
 A infraestrutura e responsavel por traduzir essas falhas para o protocolo de
-entrega. Por exemplo:
+entrega. O `GlobalExceptionFilter` (`src/shared/infra/http`) traduz a `kind`
+para o status HTTP e responde sempre no mesmo formato:
+
+```json
+{
+  "statusCode": 409,
+  "code": "EMAIL_ALREADY_REGISTERED",
+  "message": "Este e-mail já está cadastrado."
+}
+```
 
 ```text
-EmailAlreadyRegisteredException -> HTTP 409
-InvalidCredentialsException -> HTTP 401
+not_found -> 404    conflict -> 409        unauthenticated -> 401
+forbidden -> 403    invalid_input -> 422   business_rule -> 422
 ```
+
+Regras:
+
+- casos de uso e entidades nao lancam exceptions do NestJS (`HttpException`);
+- um erro que nao e `ApplicationException` nem `HttpException` 4xx e tratado
+  como falha inesperada: responde `500` com mensagem generica, e o detalhe
+  vai somente para o log;
+- adaptadores traduzem erros de bibliotecas que representam falhas esperadas
+  (por exemplo, violacao de unicidade do Prisma) para uma exception da
+  aplicacao. Os demais seguem como falha inesperada;
+- uma nova categoria so e criada quando nenhuma existente descrever a falha.
+  Ao criar, o filtro passa a exigir o status correspondente em tempo de
+  compilacao.
 
 ## Estrategia de testes
 
