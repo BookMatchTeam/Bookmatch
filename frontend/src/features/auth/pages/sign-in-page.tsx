@@ -3,14 +3,11 @@ import { Eye, EyeOff } from 'lucide-react'
 import { Link, useNavigate } from 'react-router'
 
 import { paths } from '@/app/router/paths'
-import { AuthThemeToggle } from '@/features/auth/components/auth-theme-toggle'
-import { useAuthTheme } from '@/features/auth/hooks/use-auth-theme'
+import { AuthCardShell } from '@/features/auth/components/auth-card-shell'
 
 export function SignInPage() {
   const navigate = useNavigate()
   const [showPassword, setShowPassword] = useState(false)
-  const { theme, setTheme } = useAuthTheme()
-  const isDark = theme === 'dark'
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -21,139 +18,111 @@ export function SignInPage() {
   }
 
   return (
-    <div className={`auth-screen ${isDark ? 'auth-dark' : 'auth-light'} relative min-h-svh overflow-hidden bg-auth-page text-auth-ink [font-family:Arial,sans-serif]`}>
-      <div className="relative mx-auto min-h-[876px] w-full max-w-[375px] overflow-hidden px-4 pt-[97px] sm:px-6">
-        <img
-          className="pointer-events-none absolute top-[9px] left-1/2 z-20 h-[119px] w-[146px] -translate-x-1/2 select-none"
-          src="/brand/bookmatch-full-logo.svg"
-          width="146"
-          height="119"
-          alt="BookMatch"
-        />
+    <>
+      <title>Entrar · BookMatch</title>
+      <AuthCardShell>
+        <p className="m-0 whitespace-nowrap text-[14.5px] text-auth-ink tracking-[-0.25px] max-[350px]:text-[13px]">
+          Olá, seja bem vindo ao{' '}
+          <strong className="font-extrabold text-auth-brand-gold italic">
+            Book<span className="text-auth-brand-match">Match</span>
+          </strong>
+        </p>
 
-        <img
-          className="pointer-events-none absolute top-[66px] right-[48px] z-20 h-[45px] w-[66px] select-none max-[350px]:right-7"
-          src="/brand/bookmatch-login-top.svg"
-          width="66"
-          height="45"
-          alt=""
-          aria-hidden="true"
-        />
+        <h1 className="mt-[22px] mb-0 text-[36px] leading-[1.23] font-semibold tracking-[-1.05px]">
+          Vamos
+          <br />
+          Começar?
+        </h1>
 
-        <section className="relative z-10 mx-auto min-h-[724px] w-full max-w-[327px] rounded-[36px] bg-auth-card px-[27px] pt-[57px] pb-10 text-auth-ink shadow-[var(--auth-panel-shadow-soft)]">
-          <AuthThemeToggle theme={theme} onToggle={() => setTheme(isDark ? 'light' : 'dark')} />
-          <p className="m-0 whitespace-nowrap text-[14.5px] text-auth-ink tracking-[-0.25px] max-[350px]:text-[13px]">
-            Olá, seja bem vindo ao{' '}
-            <strong className="font-extrabold text-auth-brand-gold italic">
-              Book<span className="text-auth-brand-match">Match</span>
-            </strong>
-          </p>
+        <form className="mt-[27px]" onSubmit={handleSubmit}>
+          <label
+            className="block text-xs leading-[18px] font-medium text-auth-label"
+            htmlFor="signin-identity"
+          >
+            Entre com seu nome de Usuário ou seu E-mail
+          </label>
+          <input
+            className="mt-[13px] h-14 w-full rounded-xl border-[1.2px] border-auth-border bg-auth-surface px-[15px] text-base text-auth-ink outline-none transition placeholder:text-auth-subtle focus:border-auth-focus focus:ring-[3px] focus:ring-auth-focus-ring/12"
+            id="signin-identity"
+            name="identity"
+            type="text"
+            placeholder="Usuário ou E-mail"
+            autoComplete="username"
+            required
+          />
 
-          <h1 className="mt-[22px] mb-0 text-[36px] leading-[1.23] font-semibold tracking-[-1.05px]">
-            Vamos
-            <br />
-            Começar?
-          </h1>
-
-          <form className="mt-[27px]" onSubmit={handleSubmit}>
-            <label
-              className="block text-xs leading-[18px] font-medium text-auth-label"
-              htmlFor="signin-identity"
-            >
-              Entre com seu nome de Usuário ou seu E-mail
-            </label>
+          <label
+            className="mt-[23px] block text-xs leading-[18px] font-medium text-auth-label"
+            htmlFor="signin-password"
+          >
+            Insira sua senha
+          </label>
+          <div className="relative mt-[14px]">
             <input
-              className="mt-[13px] h-14 w-full rounded-xl border-[1.2px] border-auth-border bg-auth-surface px-[15px] text-base text-auth-ink outline-none transition placeholder:text-auth-subtle focus:border-auth-focus focus:ring-[3px] focus:ring-auth-focus-ring/12"
-              id="signin-identity"
-              name="identity"
-              type="text"
-              placeholder="Usuário ou E-mail"
-              autoComplete="username"
+              className="h-14 w-full rounded-xl border-[1.2px] border-auth-border bg-auth-surface px-[15px] pr-12 text-base text-auth-ink outline-none transition placeholder:text-auth-subtle focus:border-auth-focus focus:ring-[3px] focus:ring-auth-focus-ring/12"
+              id="signin-password"
+              name="password"
+              type={showPassword ? 'text' : 'password'}
+              placeholder="Senha"
+              autoComplete="current-password"
               required
             />
-
-            <label
-              className="mt-[23px] block text-xs leading-[18px] font-medium text-auth-label"
-              htmlFor="signin-password"
-            >
-              Insira sua senha
-            </label>
-            <div className="relative mt-[14px]">
-              <input
-                className="h-14 w-full rounded-xl border-[1.2px] border-auth-border bg-auth-surface px-[15px] pr-12 text-base text-auth-ink outline-none transition placeholder:text-auth-subtle focus:border-auth-focus focus:ring-[3px] focus:ring-auth-focus-ring/12"
-                id="signin-password"
-                name="password"
-                type={showPassword ? 'text' : 'password'}
-                placeholder="Senha"
-                autoComplete="current-password"
-                required
-              />
-              <button
-                className="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-xl text-auth-muted transition hover:text-auth-accent focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-auth-focus"
-                type="button"
-                onClick={() => setShowPassword((visible) => !visible)}
-                aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
-                aria-pressed={showPassword}
-              >
-                {showPassword ? (
-                  <EyeOff aria-hidden="true" className="size-[18px]" />
-                ) : (
-                  <Eye aria-hidden="true" className="size-[18px]" />
-                )}
-              </button>
-            </div>
-
-            <div className="mt-[7px] flex justify-end">
-              <Link
-                className="text-xs font-semibold text-auth-link no-underline hover:underline focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-auth-focus"
-                to={paths.recoverPassword}
-              >
-                Esqueci minha senha
-              </Link>
-            </div>
-
             <button
-              className="mt-[21px] h-[55px] w-full rounded-xl border-0 bg-auth-primary text-base font-semibold text-white shadow-[var(--auth-button-shadow)] transition hover:bg-auth-primary-hover focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-auth-focus-outline active:translate-y-px"
-              type="submit"
-            >
-              Entrar
-            </button>
-
-            <p className="mt-[15px] mb-0 whitespace-nowrap text-center text-[12.5px] text-auth-muted max-[350px]:text-[11px]">
-              Não possui uma conta?{' '}
-              <Link
-                className="font-bold text-auth-link underline underline-offset-2"
-                to={paths.signUp}
-              >
-                Faça seu cadastro
-              </Link>
-            </p>
-
-            <p className="mt-[26px] mb-0 text-[13.5px] font-semibold text-auth-label">
-              Ou continue com:
-            </p>
-
-            <button
-              className="mt-[15px] flex h-[55px] w-full items-center justify-center gap-[11px] rounded-[11px] border-0 bg-auth-social-surface px-[17px] text-[13px] font-medium text-auth-ink transition hover:-translate-y-px hover:bg-auth-social-hover focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-auth-focus-outline"
+              className="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-xl text-auth-muted transition hover:text-auth-accent focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-auth-focus"
               type="button"
-              onClick={() => navigate(paths.discovery)}
+              onClick={() => setShowPassword((visible) => !visible)}
+              aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+              aria-pressed={showPassword}
             >
-              <GoogleIcon />
-              <span>Faça login com Google</span>
+              {showPassword ? (
+                <EyeOff aria-hidden="true" className="size-[18px]" />
+              ) : (
+                <Eye aria-hidden="true" className="size-[18px]" />
+              )}
             </button>
-          </form>
-        </section>
+          </div>
 
-        <img
-          className="pointer-events-none absolute top-[790px] left-[59px] z-20 h-10 w-[65px] select-none max-[350px]:left-10"
-          src="/brand/bookmatch-login-bottom.svg"
-          width="65"
-          height="40"
-          alt=""
-          aria-hidden="true"
-        />
-      </div>
-    </div>
+          <div className="mt-[7px] flex justify-end">
+            <Link
+              className="text-xs font-semibold text-auth-link no-underline hover:underline focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-auth-focus"
+              to={paths.recoverPassword}
+            >
+              Esqueci minha senha
+            </Link>
+          </div>
+
+          <button
+            className="mt-[21px] h-[55px] w-full rounded-xl border-0 bg-auth-primary text-base font-semibold text-white shadow-[var(--auth-button-shadow)] transition hover:bg-auth-primary-hover focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-auth-focus-outline active:translate-y-px"
+            type="submit"
+          >
+            Entrar
+          </button>
+
+          <p className="mt-[15px] mb-0 whitespace-nowrap text-center text-[12.5px] text-auth-muted max-[350px]:text-[11px]">
+            Não possui uma conta?{' '}
+            <Link
+              className="font-bold text-auth-link underline underline-offset-2"
+              to={paths.signUp}
+            >
+              Faça seu cadastro
+            </Link>
+          </p>
+
+          <p className="mt-[26px] mb-0 text-[13.5px] font-semibold text-auth-label">
+            Ou continue com:
+          </p>
+
+          <button
+            className="mt-[15px] flex h-[55px] w-full items-center justify-center gap-[11px] rounded-[11px] border-0 bg-auth-social-surface px-[17px] text-[13px] font-medium text-auth-ink transition hover:-translate-y-px hover:bg-auth-social-hover focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-auth-focus-outline"
+            type="button"
+            onClick={() => navigate(paths.discovery)}
+          >
+            <GoogleIcon />
+            <span>Faça login com Google</span>
+          </button>
+        </form>
+      </AuthCardShell>
+    </>
   )
 }
 

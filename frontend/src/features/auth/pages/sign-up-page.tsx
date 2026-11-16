@@ -4,7 +4,6 @@ import { Link, useNavigate } from 'react-router'
 
 import { paths } from '@/app/router/paths'
 import { AuthThemeToggle } from '@/features/auth/components/auth-theme-toggle'
-import { useAuthTheme } from '@/features/auth/hooks/use-auth-theme'
 
 const brazilianStates = [
   ['AC', 'Acre'],
@@ -43,8 +42,6 @@ export function SignUpPage() {
   const navigate = useNavigate()
   const [photoName, setPhotoName] = useState('')
   const [photoError, setPhotoError] = useState('')
-  const { theme, setTheme } = useAuthTheme()
-  const isDark = theme === 'dark'
 
   function handlePhotoChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
@@ -78,8 +75,9 @@ export function SignUpPage() {
   }
 
   return (
-    <div className={`auth-screen ${isDark ? 'auth-dark' : 'auth-light'} min-h-svh bg-auth-page text-auth-ink [font-family:Arial,sans-serif]`}>
-      <div className="mx-auto min-h-[1638px] w-full max-w-[390px] overflow-hidden bg-auth-page-surface px-[18px] text-auth-ink shadow-[var(--auth-page-shadow)]">
+    <>
+      <title>Criar conta · BookMatch</title>
+      <div className="mx-auto w-full max-w-[390px] overflow-hidden bg-auth-page-surface px-[18px] text-auth-ink shadow-[var(--auth-page-shadow)]">
         <header className="mx-[-18px] flex h-[87px] items-center justify-between border-b border-auth-divider bg-auth-header px-5 py-2">
           <Link
             className="rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-auth-focus"
@@ -133,7 +131,7 @@ export function SignUpPage() {
           className="relative rounded-[13px] border border-auth-divider bg-auth-card px-3.5 py-[18px] text-auth-ink shadow-[var(--auth-form-shadow)]"
           onSubmit={handleSubmit}
         >
-          <AuthThemeToggle theme={theme} onToggle={() => setTheme(isDark ? 'light' : 'dark')} />
+          <AuthThemeToggle />
           <h2 className="mt-[7px] mb-3 text-[23px] font-bold tracking-[-0.6px]">
             Crie sua conta
           </h2>
@@ -314,7 +312,7 @@ export function SignUpPage() {
           <span>Acesso à plataforma BookMatch.</span>
         </footer>
       </div>
-    </div>
+    </>
   )
 }
 

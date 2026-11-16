@@ -1,25 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useContext } from 'react'
 
-export type AuthTheme = 'light' | 'dark'
+import { AuthThemeContext } from '@/features/auth/hooks/auth-theme-context'
 
 export function useAuthTheme() {
-  const [theme, setTheme] = useState<AuthTheme>(() => {
-    try {
-      return localStorage.getItem('bookmatch-auth-theme') === 'dark'
-        ? 'dark'
-        : 'light'
-    } catch {
-      return 'light'
-    }
-  })
+  const context = useContext(AuthThemeContext)
 
-  useEffect(() => {
-    try {
-      localStorage.setItem('bookmatch-auth-theme', theme)
-    } catch {
-      // Theme still works for the current page when storage is unavailable.
-    }
-  }, [theme])
+  if (!context) {
+    throw new Error('useAuthTheme must be used within an AuthThemeProvider')
+  }
 
-  return { theme, setTheme }
+  return context
 }
