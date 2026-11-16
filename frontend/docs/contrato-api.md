@@ -47,21 +47,111 @@ O backend deve incluir `X-BookMatch-Client` em `Access-Control-Allow-Headers`. C
 
 Respostas com conteúdo devem usar JSON e o header `Content-Type: application/json`. Operações concluídas sem conteúdo podem retornar `204 No Content`.
 
-Formato preferencial para erros:
+Toda resposta de erro da API tem o mesmo formato, definido no ADR-003 do
+backend (`backend/docs/adr/003-formato-unico-de-erro.md`):
 
 ```json
 {
-  "statusCode": 422,
-  "code": "VALIDATION_ERROR",
-  "message": "Revise os dados informados.",
-  "fieldErrors": {
-    "email": ["Informe um e-mail válido."]
-  },
-  "requestId": "identificador-opcional"
+  "statusCode": 409,
+  "code": "EMAIL_ALREADY_REGISTERED",
+  "message": "Este e-mail já está cadastrado."
 }
 ```
 
-O frontend também aceita o formato padrão do `ValidationPipe` do NestJS, em que `message` pode ser uma string ou uma lista de mensagens.
+- `code` é estável e é o que o frontend usa para decidir o que fazer.
+- `message` está em português e pode ser exibida ao usuário.
+- Não há `fieldErrors` nem `requestId`: a validação por campo fica no
+  formulário do frontend.
+- Erro de validação de formato (campo ausente ou de tipo errado) responde
+  `422` `VALIDATION_ERROR`. JSON malformado responde `400` `BAD_REQUEST`.
+- `403` `CSRF_CHECK_FAILED`: falta o header `X-BookMatch-Client: web` ou o
+  `Origin` não está na lista permitida (veja CORS e CSRF).
+- `429`: limite atingido. Tente de novo mais tarde; o `code` diz qual limite.
+- Erros inesperados respondem `500` `INTERNAL_ERROR`, sem detalhes.
+
+O cliente HTTP do frontend também aceita o formato padrão do `ValidationPipe`
+do NestJS, em que `message` pode ser uma string ou uma lista de mensagens,
+mas a API não o usa mais.
+
+## Endpoints
+
+Todas as rotas ficam sob `https://<api>/api`. As que alteram estado exigem
+`X-BookMatch-Client: web`. O Swagger fica em `/api/docs`.
+
+### Cadastro (`auth`)
+
+O cadastro cria a conta pendente e envia por e-mail um código de 6 dígitos,
+válido por 15 minutos. A conta só fica ativa depois que o código é
+confirmado. Login e sessão terão endpoints próprios.
+
+#### `POST /api/auth/sign-up`
+
+```json
+{
+  "name": "Ana Souza",
+  "email": "ana@exemplo.com",
+  "password": "senha1234",
+  "city": "São Paulo",
+  "state": "SP",
+  "acceptedTerms": true
+}
+```
+
+Resposta `201`: `{ "email": "ana@exemplo.com" }`, com o e-mail normalizado
+(sem espaços nas pontas e em minúsculas), que a tela do código deve usar.
+
+| Status | `code` | Quando |
+|---|---|---|
+| 422 | `VALIDATION_ERROR` | Campo ausente, de tipo errado ou não previsto (por exemplo, a foto) |
+| 422 | `INVALID_NAME` | Nome sem 2 a 100 caracteres, sem contar os espaços das pontas |
+| 422 | `INVALID_EMAIL` | Formato inválido ou mais de 254 caracteres |
+| 422 | `INVALID_PASSWORD` | Senha sem 8 a 128 caracteres, ou sem letra, ou sem número |
+| 422 | `INVALID_CITY` | Cidade sem 2 a 100 caracteres, sem contar os espaços das pontas |
+| 422 | `INVALID_STATE` | Não é uma das 27 siglas de UF (maiúsculas ou minúsculas) |
+| 422 | `TERMS_NOT_ACCEPTED` | `acceptedTerms` diferente de `true` |
+| 409 | `EMAIL_ALREADY_REGISTERED` | E-mail de uma conta já ativa |
+| 429 | `VERIFICATION_CODE_RESEND_TOO_SOON` | E-mail de conta pendente com envio há menos de 60 s |
+| 429 | `VERIFICATION_CODE_SEND_LIMIT_REACHED` | E-mail de conta pendente com 5 envios na última hora |
+
+Se o e-mail for de uma conta ainda pendente, o cadastro é refeito: nome,
+senha, cidade e UF são substituídos e um novo código é enviado.
+
+#### `POST /api/auth/email-verification`
+
+```json
+{ "email": "ana@exemplo.com", "code": "042317" }
+```
+
+Resposta `204`: conta ativada.
+
+| Status | `code` | Quando |
+|---|---|---|
+| 422 | `VALIDATION_ERROR` | `code` sem exatamente 6 dígitos (a tentativa não conta) |
+| 422 | `INVALID_VERIFICATION_CODE` | Código errado, e-mail sem cadastro ou nenhum código ativo |
+| 422 | `VERIFICATION_CODE_EXPIRED` | Passaram 15 minutos desde o envio |
+| 422 | `VERIFICATION_CODE_ATTEMPTS_EXCEEDED` | O código recebeu 5 tentativas erradas |
+| 409 | `EMAIL_ALREADY_VERIFIED` | A conta já está ativa |
+
+Só o código mais recente vale. Nos três últimos `422`, o caminho é pedir um
+novo código.
+
+#### `POST /api/auth/email-verification/resend`
+
+```json
+{ "email": "ana@exemplo.com" }
+```
+
+Resposta `204`. Também responde `204`, sem enviar nada, para e-mail sem
+cadastro ou de conta já ativa, para não revelar quais contas existem.
+
+| Status | `code` | Quando |
+|---|---|---|
+| 422 | `VALIDATION_ERROR` | Campo ausente ou de tipo errado |
+| 429 | `VERIFICATION_CODE_RESEND_TOO_SOON` | Menos de 60 s desde o último envio |
+| 429 | `VERIFICATION_CODE_SEND_LIMIT_REACHED` | 5 envios na última hora |
+
+Os limites contam todos os envios da conta: o cadastro, o cadastro refeito e
+os reenvios.
 
 ## Tratamento no frontend
 
@@ -84,11 +174,13 @@ Pontos identificados na revisão da Etapa 4 que serão tratados quando a integra
 
 ### Backend
 
-- [ ] Habilitar CORS com a lista exata de origins e `credentials: true`.
-- [ ] Incluir `X-BookMatch-Client` em `Access-Control-Allow-Headers`.
-- [ ] Validar `Origin` e exigir `X-BookMatch-Client` nos métodos `POST`, `PUT`, `PATCH` e `DELETE`.
+- [x] Habilitar CORS com a lista exata de origins e `credentials: true`.
+- [x] Incluir `X-BookMatch-Client` em `Access-Control-Allow-Headers`.
+- [x] Validar `Origin` e exigir `X-BookMatch-Client` nos métodos `POST`, `PUT`, `PATCH` e `DELETE`.
 
-Sem essas configurações, o navegador bloqueia as chamadas de `bookmatch.galpao.tech` para `api-bookmatch.galpao.tech`.
+Concluídas na spec `docs/specs/criar-conta`. A lista de origins vem de
+`CORS_ORIGINS` no backend. Uma requisição sem `Origin` (cliente que não é
+navegador) passa pela checagem de origem, mas ainda precisa do header.
 
 ### Cliente HTTP
 
