@@ -148,19 +148,34 @@ formato antigo (`fieldErrors` e `requestId`) e precisa ser alinhado a este.
 
 ## Item 3 — Pasta `src/shared/` mínima
 
-Status: em andamento.
+Status: concluído.
 
 Proposta: conter somente o que já é comum a todos os domínios, seguindo a
 regra do `ARCHITECTURE.md` de não antecipar abstrações.
 
+Decisão: IDs no formato UUID v7, gerados pela aplicação com a lib `uuid` (o
+Node não oferece v7 nativo). O registro formal fica com o ADR-002.
+
 - [x] Mover a `ApplicationException` base para `src/shared/application`
       (criada diretamente lá no item 2).
-- [ ] Criar o contrato `IdGenerator` e sua implementação na infraestrutura.
-- [ ] Criar o contrato `Clock` e sua implementação na infraestrutura.
-- [ ] Criar implementações fixas (fakes) de `IdGenerator` e `Clock` para os
-      testes, deixando-os determinísticos.
-- [ ] Registrar no `ARCHITECTURE.md` o papel de `src/shared` e o que pode
+- [x] Criar o contrato `IdGenerator` e sua implementação na infraestrutura
+      (`UuidV7IdGenerator`).
+- [x] Criar o contrato `Clock` e sua implementação na infraestrutura
+      (`SystemClock`).
+- [x] Criar implementações fixas (fakes) de `IdGenerator` e `Clock` para os
+      testes, deixando-os determinísticos (`FixedIdGenerator`, `FixedClock`).
+- [x] Registrar no `ARCHITECTURE.md` o papel de `src/shared` e o que pode
       entrar nela.
+
+Como ficou:
+
+- `src/shared/application/id-generator.ts` e `clock.ts`: os contratos.
+- `src/shared/infra/uuid-v7-id-generator.ts` e `system-clock.ts`: as
+  implementações reais.
+- `src/shared/infra/shared.module.ts`: módulo global que fornece os tokens
+  `ID_GENERATOR` e `CLOCK`.
+- `src/shared/testing/`: os fakes. Ficam fora do build de produção
+  (`tsconfig.build.json`).
 
 ## Item 4 — ADRs em `docs/adr`
 
@@ -172,9 +187,11 @@ O `ARCHITECTURE.md` prevê os ADRs, mas a pasta ainda não existe.
       consequências).
 - [ ] ADR-001: arquitetura em camadas por domínio, formalizando o que está no
       `ARCHITECTURE.md`.
-- [ ] ADR-002: estratégia de IDs (candidato: UUID v7, ordenável por tempo e
-      gerado pela aplicação).
-- [ ] ADR-003: estratégia de sessão e autenticação. Fica para o início do
+- [ ] ADR-002: IDs UUID v7 gerados pela aplicação (decidido no item 3).
+- [ ] ADR-003: formato único de erro (decidido no item 2), incluindo as
+      alternativas descartadas: RFC 9457, `requestId`, `fieldErrors` e
+      `success`.
+- [ ] ADR-004: estratégia de sessão e autenticação. Fica para o início do
       domínio `auth`.
 
 ## Item 5 — Prefixo global de rotas
@@ -225,7 +242,7 @@ ainda falta o ambiente.
 ## Fora do escopo
 
 - Qualquer caso de uso de domínio (`RegisterUser`, login, recuperação).
-- Autenticação, sessão e autorização. Ficam com o ADR-003.
+- Autenticação, sessão e autorização. Ficam com o ADR-004.
 - Logging estruturado, observabilidade e rate limiting. Entram quando houver
   necessidade concreta.
 
@@ -235,4 +252,4 @@ ainda falta o ambiente.
 - A aplicação não sobe com configuração inválida.
 - Todo erro da API segue o formato único.
 - `ARCHITECTURE.md` atualizado com `src/shared`, configuração e erros.
-- ADR-001 e ADR-002 aceitos.
+- ADR-001, ADR-002 e ADR-003 aceitos.

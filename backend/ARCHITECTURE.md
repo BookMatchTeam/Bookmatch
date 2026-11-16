@@ -265,6 +265,50 @@ Casos de uso nao recebem `AppConfig` inteiro. Quando uma regra de negocio
 depender de um valor configuravel, o modulo NestJS repassa somente esse valor
 ao montar o caso de uso.
 
+## Codigo compartilhado
+
+`src/shared` contem somente o que ja e usado, ou sera usado de imediato, por
+mais de um dominio. Segue a mesma divisao dos dominios:
+
+```text
+src/shared/
+|-- application/                 # TypeScript puro
+|   |-- exceptions/              # ApplicationException
+|   |-- clock.ts                 # contrato Clock
+|   `-- id-generator.ts          # contrato IdGenerator
+|-- infra/
+|   |-- http/                    # filtro global e formato de erro
+|   |-- shared.module.ts         # fornece ID_GENERATOR e CLOCK
+|   |-- system-clock.ts
+|   `-- uuid-v7-id-generator.ts
+`-- testing/                     # fakes para testes, fora do build
+    |-- fixed-clock.ts
+    `-- fixed-id-generator.ts
+```
+
+Regras:
+
+- entidades recebem o identificador de `IdGenerator` ao serem criadas. O
+  formato e UUID v7;
+- casos de uso e entidades obtem o horario atual de `Clock`, nunca de
+  `new Date()` ou `Date.now()`;
+- os modulos de dominio repassam `ID_GENERATOR` e `CLOCK` aos casos de uso
+  pelo `inject` de seus `useFactory`;
+- testes usam `FixedIdGenerator` e `FixedClock` para tornar identificadores e
+  horarios previsiveis;
+- algo so entra em `src/shared` quando mais de um dominio precisar. Codigo
+  usado por um unico dominio fica nele.
+
+```ts
+// auth.module.ts
+{
+  provide: RegisterUserUseCase,
+  useFactory: (gateway, hasher, idGenerator, clock) =>
+    new RegisterUserUseCase(gateway, hasher, idGenerator, clock),
+  inject: [REGISTER_USER_GATEWAY, PASSWORD_HASHER, ID_GENERATOR, CLOCK],
+}
+```
+
 ## Evolucao arquitetural
 
 Esta arquitetura e um ponto de partida, nao uma estrutura imutavel. Mudancas
