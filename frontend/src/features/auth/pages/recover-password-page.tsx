@@ -1,9 +1,11 @@
 import { useState, type FormEvent } from 'react'
 import { KeyRound, ShieldCheck } from 'lucide-react'
-import { Link } from 'react-router'
 
 import { paths } from '@/app/router/paths'
+import { AuthButton } from '@/features/auth/components/auth-button'
 import { AuthCardShell } from '@/features/auth/components/auth-card-shell'
+import { AuthField } from '@/features/auth/components/auth-field'
+import { AuthTextLink } from '@/features/auth/components/auth-text-link'
 
 export function RecoverPasswordPage() {
   const [submitted, setSubmitted] = useState(false)
@@ -46,15 +48,9 @@ export function RecoverPasswordPage() {
         </div>
 
         <form className="mt-7" onSubmit={handleSubmit}>
-          <label
-            className="mb-2 block text-xs font-medium text-auth-label"
-            htmlFor="recover-email"
-          >
-            Seu e-mail
-          </label>
-          <input
-            className="h-14 w-full rounded-xl border border-auth-border bg-auth-surface px-[15px] text-base text-auth-ink outline-none transition placeholder:text-auth-subtle focus:border-auth-focus focus:ring-[3px] focus:ring-auth-focus-ring/12"
+          <AuthField
             id="recover-email"
+            label="Seu e-mail"
             name="email"
             type="email"
             placeholder="seuemail@exemplo.com"
@@ -62,12 +58,9 @@ export function RecoverPasswordPage() {
             required
           />
 
-          <button
-            className="mt-5 h-[54px] w-full rounded-[10px] border-0 bg-auth-primary text-sm font-semibold text-white shadow-[var(--auth-button-shadow)] transition hover:bg-auth-primary-hover focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-auth-focus-outline active:translate-y-px"
-            type="submit"
-          >
+          <AuthButton className="mt-5" type="submit">
             Enviar link de recuperação
-          </button>
+          </AuthButton>
         </form>
 
         <div
@@ -87,12 +80,9 @@ export function RecoverPasswordPage() {
         </div>
 
         <div className="mt-7 border-t border-auth-divider pt-5 text-center">
-          <Link
-            className="text-xs font-semibold text-auth-link no-underline hover:underline focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-auth-focus"
-            to={paths.signIn}
-          >
+          <AuthTextLink to={paths.signIn}>
             ← Voltar para o login
-          </Link>
+          </AuthTextLink>
         </div>
       </AuthCardShell>
     </>
