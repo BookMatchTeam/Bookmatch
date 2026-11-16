@@ -104,7 +104,7 @@ Exemplo de corpo:
 {
   "name": "Ana Souza",
   "email": "ana@exemplo.com",
-  "password": "senha1234",
+  "password": "Senha@1234",
   "city": "São Paulo",
   "state": "SP",
   "acceptedTerms": true
