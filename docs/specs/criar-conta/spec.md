@@ -87,9 +87,10 @@ código por e-mail e, ao informá-lo, tem a conta ativada.
 - **RN-19**: O e-mail só é enviado depois do commit da transação. Se o envio
   falhar, o cadastro ou o reenvio não é desfeito: a API responde normalmente
   e registra o erro no log, sem o código.
-- **RN-20**: O e-mail é enviado por SMTP, em português, com o assunto
+- **RN-20**: O e-mail é escrito em português, com o assunto
   "Seu código de verificação do BookMatch". O corpo traz o código e diz que
-  ele vale por 15 minutos. O remetente vem de `EMAIL_FROM`.
+  ele vale por 15 minutos. O envio, o remetente e o tratamento de falhas
+  seguem `docs/specs/servico-smtp/spec.md`.
 
 **Respostas que não revelam contas**
 - **RN-21**: O reenvio para um e-mail sem cadastro ou de uma conta já `ACTIVE`
@@ -288,20 +289,17 @@ entram em `.env.example`, em `deploy/env.production.example` e no CI.
 | `TERMS_VERSION` | Versão vigente dos termos (RN-06) | Obrigatória, de 1 a 20 caracteres. Valor inicial `1` |
 | `CORS_ORIGINS` | Origins aceitos (RN-23, RN-24) | Lista separada por vírgula, cada item com URL válida |
 | `VERIFICATION_CODE_SECRET` | Chave do HMAC (RN-12) | Obrigatória, com pelo menos 32 caracteres |
-| `SMTP_HOST` | Servidor SMTP (RN-20) | Obrigatória |
-| `SMTP_PORT` | Porta SMTP | Obrigatória, inteiro |
-| `SMTP_SECURE` | TLS direto (`true`) ou STARTTLS/sem TLS (`false`) | Obrigatória, booleano |
-| `SMTP_USER` / `SMTP_PASSWORD` | Autenticação SMTP | Opcionais, mas vêm as duas ou nenhuma |
-| `EMAIL_FROM` | Remetente (RN-20) | Obrigatória |
+As variáveis do envio de e-mail (`SMTP_*`, `EMAIL_FROM_NAME` e
+`EMAIL_FROM_ADDRESS`) estão definidas em `docs/specs/servico-smtp/spec.md`.
+Todos os ambientes enviam pelo Gmail; não há servidor de e-mail falso em
+desenvolvimento.
 
-Em desenvolvimento, o `compose.yaml` ganha um serviço Mailpit (SMTP na porta
-`1025`, interface em `http://localhost:8025`), sem autenticação. O
-`CORS_ORIGINS` de desenvolvimento inclui `http://localhost:5173` e
+O `CORS_ORIGINS` de desenvolvimento inclui `http://localhost:5173` e
 `http://localhost:3000` (Swagger).
 
-Novas dependências: `nodemailer`, para o envio SMTP, e `argon2`, para o hash
-de senha. A imagem `node:24-slim` usa glibc, que tem binário pré-compilado do
-`argon2`.
+Nova dependência: `argon2`, para o hash de senha. A imagem `node:24-slim` usa
+glibc, que tem binário pré-compilado do `argon2`. A dependência `nodemailer`
+é justificada na spec do serviço de SMTP.
 
 ## Critérios de aceite
 
