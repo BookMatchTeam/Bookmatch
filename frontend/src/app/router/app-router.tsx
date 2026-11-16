@@ -1,23 +1,23 @@
 import { Navigate, createBrowserRouter } from 'react-router'
 
 import { AuthenticatedLayout } from '@/app/router/layouts/authenticated-layout'
-import { PublicLayout } from '@/app/router/layouts/public-layout'
 import { NotFoundPage } from '@/app/router/not-found-page'
 import { paths } from '@/app/router/paths'
+import { AuthLayout } from '@/features/auth/layouts/auth-layout'
 
 export const appRouter = createBrowserRouter([
   {
-    Component: PublicLayout,
+    index: true,
+    element: <Navigate to={paths.signIn} replace />,
+  },
+  {
+    Component: AuthLayout,
     children: [
-      {
-        index: true,
-        element: <Navigate to={paths.signIn} replace />,
-      },
       {
         path: paths.signIn,
         lazy: async () => {
           const { SignInPage } = await import(
-            '@/features/auth/pages/auth-pages'
+            '@/features/auth/pages/sign-in-page'
           )
 
           return { Component: SignInPage }
@@ -35,7 +35,7 @@ export const appRouter = createBrowserRouter([
         path: paths.recoverPassword,
         lazy: async () => {
           const { RecoverPasswordPage } = await import(
-            '@/features/auth/pages/auth-pages'
+            '@/features/auth/pages/recover-password-page'
           )
 
           return { Component: RecoverPasswordPage }
