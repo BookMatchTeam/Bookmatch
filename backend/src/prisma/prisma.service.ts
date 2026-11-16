@@ -1,23 +1,23 @@
-import 'dotenv/config';
-import { Injectable, OnModuleDestroy } from '@nestjs/common';
+import { Inject, Injectable, OnModuleDestroy } from '@nestjs/common';
 import { PrismaMariaDb } from '@prisma/adapter-mariadb';
+import { APP_CONFIG, type AppConfig } from '../config/app-config.js';
 import { PrismaClient } from '../generated/prisma/client.js';
 
-function createAdapter(): PrismaMariaDb {
+function createAdapter(config: AppConfig['database']): PrismaMariaDb {
   return new PrismaMariaDb({
-    host: process.env.DATABASE_HOST ?? 'localhost',
-    port: Number(process.env.DATABASE_PORT ?? 3306),
-    user: process.env.DATABASE_USER ?? 'bookmatch',
-    password: process.env.DATABASE_PASSWORD ?? 'bookmatch_dev',
-    database: process.env.DATABASE_NAME ?? 'bookmatch',
+    host: config.host,
+    port: config.port,
+    user: config.user,
+    password: config.password,
+    database: config.name,
     connectionLimit: 5,
   });
 }
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleDestroy {
-  constructor() {
-    super({ adapter: createAdapter() });
+  constructor(@Inject(APP_CONFIG) config: AppConfig) {
+    super({ adapter: createAdapter(config.database) });
   }
 
   async onModuleDestroy(): Promise<void> {
