@@ -71,6 +71,7 @@ describe('GlobalExceptionFilter', () => {
       ['forbidden', 403],
       ['invalid_input', 422],
       ['business_rule', 422],
+      ['too_many_requests', 429],
     ])('responde %s com status %i', (kind, statusCode) => {
       const { handle } = setup();
 

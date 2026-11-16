@@ -10,7 +10,8 @@ export type ApplicationExceptionKind =
   | 'unauthenticated'
   | 'forbidden'
   | 'invalid_input'
-  | 'business_rule';
+  | 'business_rule'
+  | 'too_many_requests';
 
 /**
  * Base das falhas esperadas da aplicação.

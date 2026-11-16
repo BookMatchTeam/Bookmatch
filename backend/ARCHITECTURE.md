@@ -196,7 +196,7 @@ Toda falha esperada estende `ApplicationException`
 - `code`: identificador estavel, em `UPPER_SNAKE_CASE`, que o cliente usa para
   decidir o que fazer. Nunca muda depois de publicado;
 - `kind`: a categoria da falha (`not_found`, `conflict`, `unauthenticated`,
-  `forbidden`, `invalid_input` ou `business_rule`);
+  `forbidden`, `invalid_input`, `business_rule` ou `too_many_requests`);
 - a mensagem, segura para exibir ao usuario e escrita em portugues.
 
 ```ts
@@ -225,6 +225,7 @@ para o status HTTP e responde sempre no mesmo formato:
 ```text
 not_found -> 404    conflict -> 409        unauthenticated -> 401
 forbidden -> 403    invalid_input -> 422   business_rule -> 422
+too_many_requests -> 429
 ```
 
 Regras:

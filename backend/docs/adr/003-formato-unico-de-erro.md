@@ -83,3 +83,12 @@ resposta pode expor detalhes internos como stack trace, SQL ou credenciais.
 - Uma rota inexistente fora do prefixo `/api` não passa pelo filtro. Veja o
   [ADR-004](004-prefixo-de-rotas-api.md).
 - O `frontend/docs/contrato-api.md` precisa ser alinhado a este formato.
+
+## Atualizações
+
+- **2026-11-16 — categoria `too_many_requests` → `429`.** Criada pela spec
+  `docs/specs/criar-conta` para os limites de envio do código de verificação,
+  porque nenhuma categoria existente descrevia "tente de novo mais tarde". A
+  decisão deste ADR não muda: é a extensão prevista no `ARCHITECTURE.md`
+  ("uma nova categoria so e criada quando nenhuma existente descrever a
+  falha").
