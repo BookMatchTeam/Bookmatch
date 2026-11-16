@@ -4,7 +4,7 @@
 Molde de spec do BookMatch.
 
 Como usar:
-- Copie este arquivo para `docs/specs/<nome-da-funcionalidade>.md`.
+- Copie este arquivo para `docs/specs/<funcionalidade>/spec.md`.
 - A spec contém só decisões tomadas. Dúvidas são resolvidas na conversa
   durante a escrita, antes de o documento ficar pronto. Por isso não há seção
   de questões em aberto.
