@@ -38,8 +38,14 @@ código por e-mail e, ao informá-lo, tem a conta ativada.
   Ele é salvo sem espaços nas pontas e em minúsculas, e a unicidade considera
   esse valor normalizado. Todas as rotas desta spec normalizam o e-mail
   recebido da mesma forma.
-- **RN-03**: A senha tem de 8 a 128 caracteres, com pelo menos uma letra e um
-  número.
+- **RN-03**: A senha tem de 8 a 128 caracteres, com pelo menos:
+  - uma letra maiúscula (inclusive acentuada, como `Ç`);
+  - um número (de 0 a 9);
+  - um caractere especial: qualquer caractere que não seja letra, número ou
+    espaço (por exemplo, `! @ # $ % & * . - _`).
+
+  Letra minúscula não é exigida. Espaços são aceitos, mas não contam como
+  caractere especial.
 - **RN-04**: A cidade é obrigatória e tem de 2 a 100 caracteres, depois de
   remover os espaços das pontas.
 - **RN-05**: A UF é uma das 27 siglas brasileiras. Ela é aceita em maiúsculas
@@ -210,7 +216,7 @@ ADR-003 (`statusCode`, `code`, `message`).
 {
   "name": "Ana Souza",
   "email": "ana@exemplo.com",
-  "password": "senha1234",
+  "password": "Senha@1234",
   "city": "São Paulo",
   "state": "SP",
   "acceptedTerms": true
@@ -309,7 +315,8 @@ glibc, que tem binário pré-compilado do `argon2`. A dependência `nodemailer`
 | CA-02 | — | Envia o nome `" A "` ou com 101 caracteres | `422` `INVALID_NAME`, nada gravado | RN-01 |
 | CA-03 | — | Envia o e-mail `"  Ana@Exemplo.COM "` | Conta gravada com `ana@exemplo.com` | RN-02 |
 | CA-04 | — | Envia o e-mail `ana@` | `422` `INVALID_EMAIL` | RN-02 |
-| CA-05 | — | Envia a senha `abcdefgh`, `12345678` ou `a1` | `422` `INVALID_PASSWORD` | RN-03 |
+| CA-05 | — | Envia a senha `senha@1234` (sem maiúscula), `Senha1234` (sem especial), `Senha@abcd` (sem número), `Sen@1` (curta) ou `Senha 1234` (só espaço como especial) | `422` `INVALID_PASSWORD` | RN-03 |
+| CA-05b | — | Envia a senha `Senha@1234` ou `ÇÃO#2024` | Conta criada | RN-03 |
 | CA-06 | — | Envia a cidade com 1 caractere | `422` `INVALID_CITY` | RN-04 |
 | CA-07 | — | Envia a UF `sp` | Conta gravada com `SP` | RN-05 |
 | CA-08 | — | Envia a UF `XX` | `422` `INVALID_STATE` | RN-05 |

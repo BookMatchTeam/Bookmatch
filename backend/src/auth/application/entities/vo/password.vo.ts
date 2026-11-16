@@ -2,8 +2,10 @@ import { InvalidPasswordException } from '../../exceptions/invalid-password.exce
 
 const MIN_LENGTH = 8;
 const MAX_LENGTH = 128;
-const LETTER = /\p{L}/u;
+const UPPERCASE_LETTER = /\p{Lu}/u;
 const DIGIT = /\d/;
+/** Qualquer caractere que não seja letra, número ou espaço. */
+const SPECIAL_CHARACTER = /[^\p{L}\p{N}\s]/u;
 
 /**
  * Senha em texto puro, validada pela política (RN-03). Existe só até virar
@@ -18,8 +20,9 @@ export class Password {
     if (
       length < MIN_LENGTH ||
       length > MAX_LENGTH ||
-      !LETTER.test(raw) ||
-      !DIGIT.test(raw)
+      !UPPERCASE_LETTER.test(raw) ||
+      !DIGIT.test(raw) ||
+      !SPECIAL_CHARACTER.test(raw)
     ) {
       throw new InvalidPasswordException();
     }

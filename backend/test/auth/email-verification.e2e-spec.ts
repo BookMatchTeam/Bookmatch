@@ -17,7 +17,7 @@ describe('POST /api/auth/email-verification (e2e)', () => {
       payload: {
         name: 'Ana Souza',
         email: 'ana@exemplo.com',
-        password: 'senha1234',
+        password: 'Senha@1234',
         city: 'São Paulo',
         state: 'SP',
         acceptedTerms: true,

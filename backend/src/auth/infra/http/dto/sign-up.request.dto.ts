@@ -21,7 +21,7 @@ export class SignUpRequestDto {
   readonly email: string;
 
   @ApiProperty({
-    example: 'senha1234',
+    example: 'Senha@1234',
     description: 'De 8 a 128 caracteres, com pelo menos uma letra e um número',
   })
   @IsString()

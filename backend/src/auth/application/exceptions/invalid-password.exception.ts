@@ -6,7 +6,7 @@ export class InvalidPasswordException extends ApplicationException {
 
   constructor() {
     super(
-      'A senha deve ter entre 8 e 128 caracteres, com pelo menos uma letra e um número.',
+      'A senha deve ter entre 8 e 128 caracteres, com pelo menos uma letra maiúscula, um número e um caractere especial.',
     );
   }
 }

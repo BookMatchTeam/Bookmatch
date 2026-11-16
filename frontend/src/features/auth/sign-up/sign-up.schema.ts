@@ -23,8 +23,13 @@ export const signUpSchema = z.object({
     .string()
     .min(8, 'A senha precisa ter pelo menos 8 caracteres.')
     .max(128, 'A senha pode ter no máximo 128 caracteres.')
-    .regex(/[A-Za-z]/, 'A senha precisa ter pelo menos uma letra.')
-    .regex(/\d/, 'A senha precisa ter pelo menos um número.'),
+    .regex(/\p{Lu}/u, 'A senha precisa ter pelo menos uma letra maiúscula.')
+    .regex(/\d/, 'A senha precisa ter pelo menos um número.')
+    // Mesma regra do backend (RN-03): não é letra, número nem espaço.
+    .regex(
+      /[^\p{L}\p{N}\s]/u,
+      'A senha precisa ter pelo menos um caractere especial.',
+    ),
   city: z
     .string()
     .trim()
