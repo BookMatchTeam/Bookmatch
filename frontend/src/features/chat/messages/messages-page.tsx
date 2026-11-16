@@ -1,4 +1,4 @@
-import { PagePlaceholder } from '@/shared/components/page-placeholder'
+import { PagePlaceholder } from '@/components/page-placeholder'
 
 export function MessagesPage() {
   return (

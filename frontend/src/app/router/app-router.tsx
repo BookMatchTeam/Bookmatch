@@ -17,7 +17,7 @@ export const appRouter = createBrowserRouter([
         path: paths.signIn,
         lazy: async () => {
           const { SignInPage } = await import(
-            '@/features/auth/pages/auth-pages'
+            '@/features/auth/sign-in/sign-in-page'
           )
 
           return { Component: SignInPage }
@@ -26,7 +26,7 @@ export const appRouter = createBrowserRouter([
       {
         path: paths.signUp,
         lazy: async () => {
-          const { SignUpPage } = await import('@/features/auth/pages/sign-up-page')
+          const { SignUpPage } = await import('@/features/auth/sign-up/sign-up-page')
 
           return { Component: SignUpPage }
         },
@@ -35,7 +35,7 @@ export const appRouter = createBrowserRouter([
         path: paths.recoverPassword,
         lazy: async () => {
           const { RecoverPasswordPage } = await import(
-            '@/features/auth/pages/auth-pages'
+            '@/features/auth/recover-password/recover-password-page'
           )
 
           return { Component: RecoverPasswordPage }
@@ -50,7 +50,7 @@ export const appRouter = createBrowserRouter([
         path: paths.discovery,
         lazy: async () => {
           const { DiscoveryPage } = await import(
-            '@/features/discovery/pages/discovery-page'
+            '@/features/discovery/discovery/discovery-page'
           )
 
           return { Component: DiscoveryPage }
@@ -60,7 +60,7 @@ export const appRouter = createBrowserRouter([
         path: paths.matches,
         lazy: async () => {
           const { MatchesPage } = await import(
-            '@/features/matches/pages/matches-page'
+            '@/features/matches/matches/matches-page'
           )
 
           return { Component: MatchesPage }
@@ -70,7 +70,7 @@ export const appRouter = createBrowserRouter([
         path: paths.messages,
         lazy: async () => {
           const { MessagesPage } = await import(
-            '@/features/chat/pages/messages-page'
+            '@/features/chat/messages/messages-page'
           )
 
           return { Component: MessagesPage }
@@ -80,7 +80,7 @@ export const appRouter = createBrowserRouter([
         path: paths.profile,
         lazy: async () => {
           const { ProfilePage } = await import(
-            '@/features/profile/pages/profile-page'
+            '@/features/profile/profile/profile-page'
           )
 
           return { Component: ProfilePage }

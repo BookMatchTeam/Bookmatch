@@ -8,7 +8,7 @@ trabalham no monorepo do BookMatch.
 | Pasta | O que é | Leia antes de mexer |
 |---|---|---|
 | `backend/` | API REST: NestJS 12, ESM, Prisma 7, MariaDB, Vitest | `backend/ARCHITECTURE.md`, `backend/README.md` |
-| `frontend/` | App React 19 + Vite, PWA, Tailwind, shadcn | `frontend/README.md`, `frontend/docs/contrato-api.md` |
+| `frontend/` | App React 19 + Vite, PWA, Tailwind, shadcn | `frontend/ARCHITECTURE.md`, `frontend/README.md`, `frontend/docs/contrato-api.md` |
 | `infra/edge/` | Caddy de borda (HTTPS e domínios) | `infra/edge/README.md` |
 | `docs/` | Specs, relatórios e modelos de tabelas | `docs/specs/molde-spec.md`, `docs/modelos-tabelas.md` |
 | `.github/workflows/` | CI/CD separado por parte (backend, frontend, edge) | `README.md` da raiz |
@@ -56,10 +56,13 @@ npm run lint && npm run build
 
 ## Frontend
 
+- Siga `frontend/ARCHITECTURE.md`. Ele é a fonte única das regras de
+  arquitetura do frontend: contextos, telas como cortes verticais, componentes
+  e regras de importação.
 - O contrato com a API (rotas, cookies, erros) fica em
   `frontend/docs/contrato-api.md`. Mantenha-o em dia ao integrar um endpoint.
 - Formulários usam react-hook-form + zod. Use o `FormField` genérico de
-  `src/shared/components/form` em vez de criar campos do zero.
+  `src/components/form` em vez de criar campos do zero.
 
 ## Fluxo de uma funcionalidade
 
