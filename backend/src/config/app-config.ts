@@ -28,7 +28,7 @@ export interface AppConfig {
     readonly port: number;
     /** `true`: TLS direto. `false`: STARTTLS, quando o servidor oferece. */
     readonly secure: boolean;
-    readonly auth: { readonly user: string; readonly password: string } | null;
+    readonly auth: { readonly user: string; readonly password: string };
     readonly from: string;
   };
 }

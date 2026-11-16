@@ -18,11 +18,14 @@ export function integrationEnvironment(): Record<string, string> {
     TERMS_VERSION: '1',
     CORS_ORIGINS: 'http://localhost:5173,http://localhost:3000',
     VERIFICATION_CODE_SECRET: 'segredo-de-teste-com-32-caracteres!',
-    // Nenhum e-mail sai nos testes de integracao: o envio e substituido.
-    SMTP_HOST: 'localhost',
-    SMTP_PORT: '1025',
-    SMTP_SECURE: 'false',
-    EMAIL_FROM: 'BookMatch <nao-responda@bookmatch.local>',
+    // Nenhum e-mail sai nos testes de integracao: o serviço e substituído.
+    SMTP_HOST: 'smtp.gmail.com',
+    SMTP_PORT: '465',
+    SMTP_SECURE: 'true',
+    SMTP_USER: 'teste@gmail.com',
+    SMTP_PASSWORD: 'senha-de-app',
+    EMAIL_FROM_NAME: 'BookMatch',
+    EMAIL_FROM_ADDRESS: 'teste@gmail.com',
   };
 }
 

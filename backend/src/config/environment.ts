@@ -42,12 +42,6 @@ class EnvironmentReader {
     return value;
   }
 
-  optional(variable: string): string | undefined {
-    const value = this.environment[variable];
-
-    return value === undefined || value.trim() === '' ? undefined : value;
-  }
-
   string(
     variable: string,
     options: { minLength?: number; maxLength?: number } = {},
@@ -116,32 +110,6 @@ class EnvironmentReader {
     return Object.freeze(origins as string[]);
   }
 
-  /**
-   * Par de variáveis opcionais que precisam vir juntas: as duas ou nenhuma.
-   */
-  optionalPair(first: string, second: string): [string, string] | null {
-    const firstValue = this.optional(first);
-    const secondValue = this.optional(second);
-
-    if (firstValue !== undefined && secondValue !== undefined) {
-      return [firstValue, secondValue];
-    }
-
-    if (firstValue !== undefined) {
-      this.issues.push({
-        variable: second,
-        message: `obrigatória quando ${first} é informada`,
-      });
-    } else if (secondValue !== undefined) {
-      this.issues.push({
-        variable: first,
-        message: `obrigatória quando ${second} é informada`,
-      });
-    }
-
-    return null;
-  }
-
   port(variable: string): number {
     const value = this.required(variable);
 
@@ -163,6 +131,36 @@ class EnvironmentReader {
 
     return port;
   }
+
+  email(variable: string): string {
+    const value = this.required(variable);
+
+    if (value !== '' && !isEmail(value)) {
+      this.issues.push({
+        variable,
+        message: 'deve ser um e-mail válido',
+      });
+    }
+
+    return value;
+  }
+
+  appPassword(variable: string): string {
+    return this.required(variable).replaceAll(' ', '');
+  }
+
+  senderName(variable: string): string {
+    const value = this.string(variable, { maxLength: 100 });
+
+    if (value !== '' && /["\r\n]/.test(value)) {
+      this.issues.push({
+        variable,
+        message: 'não pode conter aspas nem quebra de linha',
+      });
+    }
+
+    return value;
+  }
 }
 
 function toOrigin(item: string): string | null {
@@ -176,14 +174,27 @@ function toOrigin(item: string): string | null {
   return isHttp && item.replace(/\/$/, '') === url.origin ? url.origin : null;
 }
 
-function toSmtpAuth(pair: [string, string] | null): AppConfig['mail']['auth'] {
-  return pair === null
-    ? null
-    : Object.freeze({ user: pair[0], password: pair[1] });
+function isEmail(value: string): boolean {
+  return value.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
 export function validateEnvironment(environment: Environment): AppConfig {
   const read = new EnvironmentReader(environment);
+  const smtpUser = read.email('SMTP_USER');
+  const smtpPassword = read.appPassword('SMTP_PASSWORD');
+  const fromName = read.senderName('EMAIL_FROM_NAME');
+  const fromAddress = read.email('EMAIL_FROM_ADDRESS');
+
+  if (
+    smtpUser !== '' &&
+    fromAddress !== '' &&
+    smtpUser.toLowerCase() !== fromAddress.toLowerCase()
+  ) {
+    read.issues.push({
+      variable: 'EMAIL_FROM_ADDRESS',
+      message: 'deve ser igual a SMTP_USER',
+    });
+  }
 
   const config: AppConfig = {
     server: Object.freeze({
@@ -209,8 +220,8 @@ export function validateEnvironment(environment: Environment): AppConfig {
       host: read.string('SMTP_HOST'),
       port: read.port('SMTP_PORT'),
       secure: read.boolean('SMTP_SECURE'),
-      auth: toSmtpAuth(read.optionalPair('SMTP_USER', 'SMTP_PASSWORD')),
-      from: read.string('EMAIL_FROM'),
+      auth: Object.freeze({ user: smtpUser, password: smtpPassword }),
+      from: `"${fromName}" <${fromAddress}>`,
     }),
   };
 

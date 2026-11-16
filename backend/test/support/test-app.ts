@@ -10,6 +10,7 @@ import {
 } from 'light-my-request';
 import { AppModule } from '../../src/app.module.js';
 import { APP_CONFIG, type AppConfig } from '../../src/config/app-config.js';
+import { EmailService } from '../../src/email/email.service.js';
 import { configureApp } from '../../src/configure-app.js';
 
 export const testConfig: AppConfig = {
@@ -25,11 +26,11 @@ export const testConfig: AppConfig = {
   terms: { version: '1' },
   verificationCode: { secret: 'segredo-de-teste-com-32-caracteres!' },
   mail: {
-    host: 'localhost',
-    port: 1025,
-    secure: false,
-    auth: null,
-    from: 'BookMatch <nao-responda@bookmatch.local>',
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
+    auth: { user: 'teste@gmail.com', password: 'senha-de-app' },
+    from: '"BookMatch" <teste@gmail.com>',
   },
 };
 
@@ -96,7 +97,12 @@ export async function createTestApp(
     controllers: options.controllers ?? [],
   })
     .overrideProvider(APP_CONFIG)
-    .useValue(options.config ?? testConfig);
+    .useValue(options.config ?? testConfig)
+    .overrideProvider(EmailService)
+    .useValue({
+      onModuleInit: async () => undefined,
+      send: async () => ({ messageId: 'fake-message-id' }),
+    });
 
   for (const { provide, useValue } of options.overrides ?? []) {
     builder = builder.overrideProvider(provide).useValue(useValue);

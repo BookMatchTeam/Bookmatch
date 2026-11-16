@@ -53,10 +53,10 @@ services:
       SMTP_HOST: ${SMTP_HOST:?defina SMTP_HOST no .env}
       SMTP_PORT: ${SMTP_PORT:?defina SMTP_PORT no .env}
       SMTP_SECURE: ${SMTP_SECURE:?defina SMTP_SECURE no .env}
-      # Opcionais, mas as duas ou nenhuma (a API recusa so uma delas).
-      SMTP_USER: ${SMTP_USER:-}
-      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
-      EMAIL_FROM: ${EMAIL_FROM:?defina EMAIL_FROM no .env}
+      SMTP_USER: ${SMTP_USER:?defina SMTP_USER no .env}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:?defina SMTP_PASSWORD no .env}
+      EMAIL_FROM_NAME: ${EMAIL_FROM_NAME:?defina EMAIL_FROM_NAME no .env}
+      EMAIL_FROM_ADDRESS: ${EMAIL_FROM_ADDRESS:?defina EMAIL_FROM_ADDRESS no .env}
     # Sem "ports": a API so e alcancada pelo Caddy de borda, pela rede "edge".
     networks:
       default:

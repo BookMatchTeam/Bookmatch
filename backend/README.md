@@ -14,14 +14,24 @@ NodeAdapter, Prisma ORM 7 e MariaDB.
 ```bash
 cp .env.example .env   # gere o VERIFICATION_CODE_SECRET: openssl rand -hex 32
 npm install
-npm run db:up          # MariaDB e Mailpit
+npm run db:up          # MariaDB
 npm run prisma:generate
 npx prisma migrate deploy
 ```
 
-O `db:up` também sobe o Mailpit, que recebe os e-mails enviados pela API (os
-códigos de verificação do cadastro) sem entregá-los. A caixa de entrada fica
-em `http://localhost:8025`.
+### Configuração do Gmail
+
+O desenvolvimento e a produção enviam e-mails por uma conta Gmail pessoal.
+Para configurar:
+
+1. Ative a verificação em duas etapas na conta Google.
+2. Crie uma senha de app em <https://myaccount.google.com/apppasswords>.
+3. Preencha `SMTP_USER`, `SMTP_PASSWORD` e `EMAIL_FROM_ADDRESS` no `.env` com
+   essa conta e senha. `EMAIL_FROM_ADDRESS` precisa ser igual a `SMTP_USER`.
+
+A senha de app pode ser colada com os espaços exibidos pelo Google. Trocar a
+senha da conta revoga as senhas de app, e uma conta Gmail pessoal tem cota
+diária de envios. Em produção, use uma conta exclusiva desse ambiente.
 
 Para alterar o schema, crie uma migration nova:
 

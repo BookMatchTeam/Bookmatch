@@ -14,10 +14,13 @@ const validEnvironment = {
   TERMS_VERSION: '1',
   CORS_ORIGINS: 'http://localhost:5173,http://localhost:3000',
   VERIFICATION_CODE_SECRET: 'a'.repeat(32),
-  SMTP_HOST: 'localhost',
-  SMTP_PORT: '1025',
-  SMTP_SECURE: 'false',
-  EMAIL_FROM: 'BookMatch <nao-responda@bookmatch.local>',
+  SMTP_HOST: 'smtp.gmail.com',
+  SMTP_PORT: '465',
+  SMTP_SECURE: 'true',
+  SMTP_USER: 'conta@gmail.com',
+  SMTP_PASSWORD: 'abcd efgh ijkl mnop',
+  EMAIL_FROM_NAME: 'BookMatch',
+  EMAIL_FROM_ADDRESS: 'Conta@Gmail.com',
 };
 
 const requiredVariables = Object.keys(validEnvironment);
@@ -55,11 +58,14 @@ describe('validateEnvironment', () => {
       terms: { version: '1' },
       verificationCode: { secret: 'a'.repeat(32) },
       mail: {
-        host: 'localhost',
-        port: 1025,
-        secure: false,
-        auth: null,
-        from: 'BookMatch <nao-responda@bookmatch.local>',
+        host: 'smtp.gmail.com',
+        port: 465,
+        secure: true,
+        auth: {
+          user: 'conta@gmail.com',
+          password: 'abcdefghijklmnop',
+        },
+        from: '"BookMatch" <Conta@Gmail.com>',
       },
     });
   });
@@ -240,38 +246,70 @@ describe('validateEnvironment', () => {
       ]);
     });
 
-    it('lê a autenticação quando SMTP_USER e SMTP_PASSWORD vêm juntas', () => {
+    it('remove os espaços da senha de app', () => {
       expect(
         validateEnvironment({
           ...validEnvironment,
-          SMTP_USER: 'usuario',
-          SMTP_PASSWORD: 'senha',
+          SMTP_PASSWORD: 'abcd efgh ijkl mnop',
         }).mail.auth,
-      ).toEqual({ user: 'usuario', password: 'senha' });
+      ).toEqual({ user: 'conta@gmail.com', password: 'abcdefghijklmnop' });
     });
 
-    it('trata SMTP_USER e SMTP_PASSWORD vazias como ausentes', () => {
+    it('aceita remetente e conta iguais sem diferenciar maiúsculas', () => {
       expect(
         validateEnvironment({
           ...validEnvironment,
-          SMTP_USER: '',
-          SMTP_PASSWORD: '',
-        }).mail.auth,
-      ).toBeNull();
+          SMTP_USER: 'conta@gmail.com',
+          EMAIL_FROM_ADDRESS: 'Conta@Gmail.com',
+        }).mail.from,
+      ).toBe('"BookMatch" <Conta@Gmail.com>');
     });
 
-    it.each([
-      ['SMTP_USER', 'SMTP_PASSWORD'],
-      ['SMTP_PASSWORD', 'SMTP_USER'],
-    ])('rejeita %s sem %s', (present, missing) => {
+    it('rejeita remetente diferente da conta autenticada', () => {
       expect(
-        captureIssues({ ...validEnvironment, [present]: 'valor' }),
+        captureIssues({
+          ...validEnvironment,
+          EMAIL_FROM_ADDRESS: 'outra@gmail.com',
+        }),
       ).toEqual([
         {
-          variable: missing,
-          message: `obrigatória quando ${present} é informada`,
+          variable: 'EMAIL_FROM_ADDRESS',
+          message: 'deve ser igual a SMTP_USER',
         },
       ]);
     });
+
+    it.each(['conta', 'conta@', '@gmail.com', 'conta @gmail.com'])(
+      'rejeita SMTP_USER inválido: %s',
+      (value) => {
+        const issues = captureIssues({
+          ...validEnvironment,
+          SMTP_USER: value,
+          EMAIL_FROM_ADDRESS: value,
+        });
+
+        expect(issues).toContainEqual({
+          variable: 'SMTP_USER',
+          message: 'deve ser um e-mail válido',
+        });
+      },
+    );
+
+    it.each(['', 'x'.repeat(101), 'Book"Match', 'Book\nMatch'])(
+      'rejeita EMAIL_FROM_NAME inválido: %j',
+      (value) => {
+        expect(
+          captureIssues({ ...validEnvironment, EMAIL_FROM_NAME: value }),
+        ).toContainEqual({
+          variable: 'EMAIL_FROM_NAME',
+          message:
+            value.trim() === ''
+              ? 'obrigatória'
+              : value.length > 100
+                ? 'deve ter até 100 caracteres'
+                : 'não pode conter aspas nem quebra de linha',
+        });
+      },
+    );
   });
 });

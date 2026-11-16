@@ -3,6 +3,8 @@ import type { Clock } from '../shared/application/clock.js';
 import type { IdGenerator } from '../shared/application/id-generator.js';
 import { CLOCK, ID_GENERATOR } from '../shared/infra/shared.module.js';
 import { APP_CONFIG, type AppConfig } from '../config/app-config.js';
+import { EmailModule } from '../email/email.module.js';
+import { EmailService } from '../email/email.service.js';
 import type { VerificationCodeGenerator } from './application/gateways/verification-code-generator.gateway.js';
 import type { VerificationCodeHasher } from './application/gateways/verification-code-hasher.gateway.js';
 import type { VerificationCodeMailer } from './application/gateways/verification-code-mailer.gateway.js';
@@ -28,15 +30,13 @@ import { RandomVerificationCodeGenerator } from './infra/crypto/random-verificat
 import { CreateAccountController } from './infra/http/create-account.controller.js';
 import { ResendVerificationCodeController } from './infra/http/resend-verification-code.controller.js';
 import { VerifyEmailController } from './infra/http/verify-email.controller.js';
-import {
-  createSmtpTransport,
-  SmtpVerificationCodeMailer,
-} from './infra/mail/smtp-verification-code-mailer.js';
+import { VerificationCodeEmailMailer } from './infra/mail/verification-code-email-mailer.js';
 import { PrismaCreateAccountGateway } from './infra/persistence/prisma/prisma-create-account.gateway.js';
 import { PrismaResendVerificationCodeGateway } from './infra/persistence/prisma/prisma-resend-verification-code.gateway.js';
 import { PrismaVerifyEmailGateway } from './infra/persistence/prisma/prisma-verify-email.gateway.js';
 
 @Module({
+  imports: [EmailModule],
   controllers: [
     CreateAccountController,
     VerifyEmailController,
@@ -62,12 +62,9 @@ import { PrismaVerifyEmailGateway } from './infra/persistence/prisma/prisma-veri
     },
     {
       provide: VERIFICATION_CODE_MAILER,
-      useFactory: (config: AppConfig) =>
-        new SmtpVerificationCodeMailer(
-          createSmtpTransport(config.mail),
-          config.mail.from,
-        ),
-      inject: [APP_CONFIG],
+      useFactory: (emailService: EmailService) =>
+        new VerificationCodeEmailMailer(emailService),
+      inject: [EmailService],
     },
     {
       provide: CreateAccountUseCase,

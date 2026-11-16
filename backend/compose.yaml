@@ -26,16 +26,6 @@ services:
       retries: 12
       start_period: 10s
 
-  # Servidor SMTP de desenvolvimento: guarda os e-mails enviados pela API sem
-  # entrega-los. SMTP em localhost:1025 e caixa de entrada em
-  # http://localhost:8025. Sobe junto com o db:up.
-  mailpit:
-    image: axllent/mailpit:v1.33.1
-    restart: unless-stopped
-    ports:
-      - "1025:1025"
-      - "8025:8025"
-
   # Banco descartavel dos testes de integracao (npm run db:test:up).
   # Fica no profile "test" para nao subir com o db:up, usa outra porta e guarda
   # os dados em memoria (tmpfs): nunca encosta no banco de desenvolvimento.
