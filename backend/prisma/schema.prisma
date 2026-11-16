@@ -7,4 +7,63 @@ datasource db {
   provider = "mysql"
 }
 
-// Os modelos serao adicionados quando os contratos de dominio forem definidos.
+// Convencoes (detalhes em docs/modelos-tabelas.md):
+// - IDs UUID v7 gerados pela aplicacao (IdGenerator), sem @default no banco.
+// - Datas de criacao e de eventos vem da aplicacao (Clock), sem @default(now()).
+// - Tabelas e colunas em snake_case via @@map e @map.
+
+enum UserStatus {
+  PENDING_VERIFICATION
+  ACTIVE
+}
+
+enum VerificationPurpose {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+}
+
+model User {
+  id           String     @id @db.Char(36)
+  name         String     @db.VarChar(100)
+  email        String     @unique @db.VarChar(254)
+  passwordHash String     @map("password_hash") @db.VarChar(255)
+  city         String     @db.VarChar(100)
+  state        String     @db.Char(2)
+  status       UserStatus
+  createdAt    DateTime   @map("created_at") @db.DateTime(3)
+  updatedAt    DateTime   @updatedAt @map("updated_at") @db.DateTime(3)
+
+  termsAcceptances  TermsAcceptance[]
+  verificationCodes VerificationCode[]
+
+  @@map("users")
+}
+
+model TermsAcceptance {
+  id           String   @id @db.Char(36)
+  userId       String   @map("user_id") @db.Char(36)
+  termsVersion String   @map("terms_version") @db.VarChar(20)
+  acceptedAt   DateTime @map("accepted_at") @db.DateTime(3)
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, termsVersion])
+  @@map("terms_acceptances")
+}
+
+model VerificationCode {
+  id            String              @id @db.Char(36)
+  userId        String              @map("user_id") @db.Char(36)
+  purpose       VerificationPurpose
+  codeHash      String              @map("code_hash") @db.Char(64)
+  attempts      Int                 @default(0)
+  expiresAt     DateTime            @map("expires_at") @db.DateTime(3)
+  consumedAt    DateTime?           @map("consumed_at") @db.DateTime(3)
+  invalidatedAt DateTime?           @map("invalidated_at") @db.DateTime(3)
+  createdAt     DateTime            @map("created_at") @db.DateTime(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, purpose, createdAt])
+  @@map("verification_codes")
+}

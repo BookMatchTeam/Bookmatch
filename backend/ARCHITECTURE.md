@@ -73,6 +73,8 @@ src/<dominio>/
 |   |   |-- <entidade>.entity.ts
 |   |   `-- <entidade>.entity.spec.ts
 |   |-- exceptions/
+|   |-- gateways/
+|   |   `-- <contrato-compartilhado>.gateway.ts
 |   `-- usecases/
 |       |-- <funcionalidade-a>/
 |       |   |-- <funcionalidade-a>.input.ts
@@ -183,7 +185,8 @@ PasswordHasherGateway   <- PasswordHasherAdapter
 
 Inicialmente, um gateway e especifico do caso de uso. Ele so e promovido a
 contrato compartilhado do dominio quando houver repeticao real entre casos de
-uso.
+uso. Contratos promovidos ficam em `application/gateways`, e os casos de uso os
+importam de la, nunca da pasta de outro caso de uso.
 
 ## Tratamento de erros
 
