@@ -17,7 +17,7 @@ export const appRouter = createBrowserRouter([
         path: paths.signIn,
         lazy: async () => {
           const { SignInPage } = await import(
-            '@/features/auth/pages/auth-pages'
+            '@/features/auth/pages/sign-in-page'
           )
 
           return { Component: SignInPage }
@@ -35,7 +35,7 @@ export const appRouter = createBrowserRouter([
         path: paths.recoverPassword,
         lazy: async () => {
           const { RecoverPasswordPage } = await import(
-            '@/features/auth/pages/auth-pages'
+            '@/features/auth/pages/recover-password-page'
           )
 
           return { Component: RecoverPasswordPage }
