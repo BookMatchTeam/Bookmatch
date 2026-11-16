@@ -1,4 +1,4 @@
-import { useId, type ComponentProps, type ReactNode } from 'react'
+import { useId, useRef, type ComponentProps, type ReactNode } from 'react'
 import {
   Controller,
   type Control,
@@ -53,6 +53,9 @@ type SelectFieldProps = {
   options: readonly FormFieldOption[]
   /** Texto exibido enquanto nada foi escolhido. */
   placeholder?: ReactNode
+  /** Classes do painel flutuante e de cada opção do select. */
+  contentClassName?: string
+  itemClassName?: string
   id?: string
   disabled?: boolean
   required?: boolean
@@ -251,43 +254,56 @@ function SelectControl({
   className,
   options,
   placeholder,
+  contentClassName,
+  itemClassName,
   disabled,
   required,
   autoComplete,
 }: SelectFieldProps & ControlProps) {
+  const portalContainerRef = useRef<HTMLDivElement>(null)
+
   return (
-    <Select
-      items={options}
-      name={name}
-      value={(value as string | undefined) || null}
-      onValueChange={(nextValue) => onChange(nextValue ?? '')}
-      onOpenChange={(open) => {
-        if (!open) onBlur()
-      }}
-      disabled={fieldDisabled || disabled}
-      required={required}
-      autoComplete={autoComplete}
-    >
-      <SelectTrigger
-        id={id}
-        ref={controlRef}
-        aria-invalid={invalid || undefined}
-        aria-describedby={describedBy}
-        className={cn('w-full', className)}
+    <div ref={portalContainerRef} className="contents">
+      <Select
+        items={options}
+        name={name}
+        value={(value as string | undefined) || null}
+        onValueChange={(nextValue) => onChange(nextValue ?? '')}
+        onOpenChange={(open) => {
+          if (!open) onBlur()
+        }}
+        disabled={fieldDisabled || disabled}
+        required={required}
+        autoComplete={autoComplete}
       >
-        <SelectValue placeholder={placeholder} />
-      </SelectTrigger>
-      <SelectContent>
-        {options.map((option) => (
-          <SelectItem
-            key={option.value}
-            value={option.value}
-            disabled={option.disabled}
-          >
-            {option.label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+        <SelectTrigger
+          id={id}
+          ref={controlRef}
+          aria-invalid={invalid || undefined}
+          aria-describedby={describedBy}
+          className={cn('w-full', className)}
+        >
+          <SelectValue placeholder={placeholder} />
+        </SelectTrigger>
+        <SelectContent
+          align="start"
+          alignItemWithTrigger={false}
+          sideOffset={6}
+          portalContainer={portalContainerRef}
+          className={contentClassName}
+        >
+          {options.map((option) => (
+            <SelectItem
+              key={option.value}
+              value={option.value}
+              disabled={option.disabled}
+              className={itemClassName}
+            >
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
   )
 }

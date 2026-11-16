@@ -21,7 +21,7 @@ import {
 } from './sign-up.schema'
 
 const passwordRequirements =
-  'Use de 8 a 128 caracteres, com pelo menos uma letra e um número.'
+  'Use no mínimo 8 caracteres, incluindo uma letra maiúscula, um caractere especial e um número.'
 
 const stateOptions = brazilianStates.map(({ uf, name }) => ({
   value: uf,
@@ -198,7 +198,9 @@ export function SignUpPage() {
             description="Apenas bairro e cidade ficam públicos. Não pedimos seu endereço residencial."
             disabled={submitting}
             labelClassName={fieldLabelClassName}
-            fieldClassName={fieldClassName}
+            fieldClassName={`${fieldClassName} [&_svg]:text-auth-subtle`}
+            contentClassName="max-h-56 touch-pan-y overscroll-contain border border-auth-divider bg-auth-card p-1.5 text-auth-ink shadow-[var(--auth-panel-shadow-strong)] ring-1 ring-auth-border/30 [-webkit-overflow-scrolling:touch] [scrollbar-color:var(--auth-border)_transparent] [scrollbar-width:thin]"
+            itemClassName="min-h-11 rounded-lg px-3 py-2 text-[13px] text-auth-ink focus:bg-auth-soft-hover focus:text-auth-ink data-selected:bg-auth-soft-surface data-selected:font-semibold data-selected:text-auth-accent [&_svg]:text-auth-accent"
             descriptionClassName="text-[10px] leading-[1.6] text-auth-subtle"
             errorClassName={fieldErrorClassName}
           />
