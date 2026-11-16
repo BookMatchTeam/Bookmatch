@@ -1,7 +1,11 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
 import { IsNotEmpty, IsString } from 'class-validator';
 import { ApplicationException } from '../src/shared/application/exceptions/application.exception.js';
-import { createTestApp, type TestApp } from './support/test-app.js';
+import {
+  createTestApp,
+  type TestApp,
+  webClientHeaders,
+} from './support/test-app.js';
 
 class SampleAlreadyExistsException extends ApplicationException {
   readonly code = 'SAMPLE_ALREADY_EXISTS';
@@ -81,6 +85,7 @@ describe('Formato de erro (e2e)', () => {
     const response = await testApp.request({
       method: 'POST',
       url: '/api/test-errors/samples',
+      headers: webClientHeaders,
       payload: { name: '' },
     });
 
@@ -96,6 +101,7 @@ describe('Formato de erro (e2e)', () => {
     const response = await testApp.request({
       method: 'POST',
       url: '/api/test-errors/samples',
+      headers: webClientHeaders,
       payload: { name: 'livro', admin: true },
     });
 
@@ -107,6 +113,7 @@ describe('Formato de erro (e2e)', () => {
     const response = await testApp.request({
       method: 'POST',
       url: '/api/test-errors/samples',
+      headers: webClientHeaders,
       payload: { name: 'livro' },
     });
 
@@ -118,7 +125,7 @@ describe('Formato de erro (e2e)', () => {
     const response = await testApp.request({
       method: 'POST',
       url: '/api/test-errors/samples',
-      headers: { 'content-type': 'application/json' },
+      headers: { ...webClientHeaders, 'content-type': 'application/json' },
       payload: '{"name":',
     });
 

@@ -21,6 +21,7 @@ const STATUS_BY_KIND: Record<ApplicationExceptionKind, HttpStatus> = {
   forbidden: HttpStatus.FORBIDDEN,
   invalid_input: HttpStatus.UNPROCESSABLE_ENTITY,
   business_rule: HttpStatus.UNPROCESSABLE_ENTITY,
+  too_many_requests: HttpStatus.TOO_MANY_REQUESTS,
 };
 
 type ErrorDescription = Pick<ApiErrorResponse, 'code' | 'message'>;

@@ -10,148 +10,183 @@ O BookMatch Backend e uma API REST modular. Sua arquitetura prioriza:
 - testabilidade;
 - evolucao incremental, evitando abstracoes prematuras.
 
-Este documento descreve o estado arquitetural desejado para o projeto. Ele deve
-ser atualizado quando uma decisao alterar a estrutura, as fronteiras ou a regra
-de dependencia da aplicacao.
+Este documento descreve a arquitetura vigente e deve ser atualizado quando uma
+decisao alterar a estrutura, as fronteiras ou a regra de dependencia. Decisoes
+relevantes, com alternativas e consequencias, sao registradas em ADRs em
+`docs/adr`.
 
 ## Organizacao por dominios
 
-Os modulos dentro de `src` representam dominios ou capacidades de negocio.
-
-Exemplos esperados:
+Cada pasta em `src` representa um dominio de negocio, com suas regras, casos de
+uso e adaptadores.
 
 ```text
 src/
-|-- auth/
-|-- books/
-`-- recommendations/
+|-- <dominio-a>/
+|-- <dominio-b>/
+|-- <modulo-tecnico>/
+|-- app.module.ts
+|-- configure-app.ts
+`-- main.ts
 ```
 
-Cada dominio possui duas areas principais:
+### Quando criar um novo dominio
 
-- `application`: nucleo independente de framework, contendo entidades, value
-  objects, casos de uso, contratos e erros da aplicacao;
-- `infra`: adaptadores e detalhes externos, como HTTP, NestJS, Prisma,
-  criptografia e integracoes.
+Um contexto vira um novo dominio quando atende a maior parte dos criterios:
+
+- **vocabulario proprio**: termos que so fazem sentido dentro dele;
+- **regras proprias**: invariantes que nao pertencem a nenhum dominio existente;
+- **ciclo de vida proprio**: suas entidades mudam por motivos independentes;
+- **mudanca isolada**: alterar suas regras nao exige alterar outros dominios;
+- **coesao**: agrupa varias funcionalidades sobre as mesmas entidades.
+
+Um contexto **nao** vira um novo dominio quando:
+
+- e apenas mais uma funcionalidade de um dominio existente (vira um caso de uso);
+- e um detalhe tecnico, como banco, e-mail ou fila (vira modulo tecnico ou
+  adaptador em `infra`);
+- existe apenas para compartilhar codigo entre dominios.
+
+Em caso de duvida, comece no dominio mais proximo e extraia um novo quando o
+vocabulario e as regras divergirem de fato. A criacao de um dominio e
+registrada em um ADR.
+
+### Modulos tecnicos
+
+Modulos sem regra de negocio, como `health` e `prisma`, ficam diretamente em
+`src` e nao seguem a divisao `application`/`infra`.
 
 ## Estrutura de um dominio
 
-O dominio de autenticacao estabelece a estrutura inicial de referencia:
+- `application`: nucleo independente de framework, com entidades, value
+  objects, casos de uso, contratos e exceptions;
+- `infra`: adaptadores para detalhes externos, como HTTP, NestJS, Prisma e
+  criptografia.
 
 ```text
-src/auth/
+src/<dominio>/
 |-- application/
 |   |-- entities/
 |   |   |-- vo/
-|   |   `-- user.entity.ts
+|   |   |   |-- <value-object>.vo.ts
+|   |   |   `-- <value-object>.vo.spec.ts
+|   |   |-- <entidade>.entity.ts
+|   |   `-- <entidade>.entity.spec.ts
 |   |-- exceptions/
+|   |-- gateways/
+|   |   `-- <contrato-compartilhado>.gateway.ts
 |   `-- usecases/
-|       `-- register-user/
-|           |-- register-user.input.ts
-|           |-- register-user.output.ts
-|           |-- register-user.gateway.ts
-|           |-- password-hasher.gateway.ts
-|           |-- register-user.use-case.ts
-|           `-- register-user.use-case.spec.ts
+|       |-- <funcionalidade-a>/
+|       |   |-- <funcionalidade-a>.input.ts
+|       |   |-- <funcionalidade-a>.output.ts
+|       |   |-- <funcionalidade-a>.gateway.ts
+|       |   |-- <funcionalidade-a>.use-case.ts
+|       |   `-- <funcionalidade-a>.use-case.spec.ts
+|       `-- <funcionalidade-b>/
 |-- infra/
-|   |-- cryptography/
 |   |-- http/
 |   |   |-- dto/
-|   |   `-- register-user.controller.ts
-|   `-- persistence/
-|       `-- prisma/
-`-- auth.module.ts
+|   |   `-- <funcionalidade>.controller.ts
+|   |-- persistence/
+|   |   `-- prisma/
+|   `-- <outros-adaptadores>/
+`-- <dominio>.module.ts
 ```
 
-A estrutura pode evoluir conforme novos casos de uso revelem necessidades
-reais. Contratos compartilhados devem ser extraidos somente quando houver uso
-por mais de um caso de uso ou uma responsabilidade comum claramente definida.
-
 ## Regra de dependencia
-
-As dependencias apontam da infraestrutura para a aplicacao:
 
 ```text
 infra -> application
 ```
 
-A camada `application` nao pode importar elementos de `infra`, NestJS, Prisma,
-HTTP ou qualquer outro mecanismo de entrega ou persistencia.
+A camada `application` nao importa `infra`, NestJS, Prisma, HTTP ou qualquer
+mecanismo de entrega ou persistencia. Entidades, value objects e casos de uso
+sao TypeScript puro e nao recebem decorators.
 
-Consequentemente:
-
-- entidades e value objects sao TypeScript puro;
-- casos de uso recebem dependencias por contratos;
-- gateways sao definidos pela aplicacao e implementados pela infraestrutura;
-- controllers apenas traduzem o protocolo HTTP para entradas e saidas da
-  aplicacao;
-- o modulo NestJS compoe implementacoes concretas e casos de uso;
-- detalhes externos podem ser substituidos sem alterar as regras da aplicacao.
+Um dominio nao importa arquivos internos de outro. A colaboracao entre dominios
+ocorre por contratos explicitos e e registrada em um ADR.
 
 ## Casos de uso verticais
 
-Cada caso de uso fica em uma pasta propria dentro de `application/usecases`.
-Essa pasta concentra o comportamento e os contratos necessarios para executar
-a operacao.
+Todo dominio possui `application/usecases`. Dentro dela, **cada pasta
+representa uma funcionalidade**, nomeada pela intencao de negocio em kebab-case
+(por exemplo, `create-account`, `change-password`).
 
-Um caso de uso pode conter:
+Cada pasta e um **corte vertical**: concentra tudo o que a funcionalidade
+precisa, em vez de espalhar em pastas horizontais como `gateways/` ou
+`outputs/`.
 
-- `input`: dados de entrada independentes do protocolo;
+- `input`: dados de entrada, independentes do protocolo;
 - `output`: resultado publico da operacao;
-- `gateway`: contratos exigidos pelo caso de uso;
-- implementacao do caso de uso;
-- testes unitarios do comportamento.
+- `gateway`: contratos de capacidades externas exigidas pelo caso de uso;
+- `use-case`: orquestra entidades, value objects e gateways;
+- `use-case.spec`: testes unitarios do comportamento.
 
-O nome dos artefatos deve refletir a intencao de negocio. Para o registro de um
-usuario, a nomenclatura adotada e `RegisterUser`, evitando alternar entre
-`CreateUser` e `RegisterUser` para a mesma operacao.
+Regras:
 
-## DTOs e entradas da aplicacao
+- um caso de uso executa uma unica funcionalidade;
+- uma pasta de funcionalidade nao importa arquivos de outra;
+- o nome reflete a intencao de negocio e e usado de forma consistente, sem
+  alternar sinonimos (`Create`/`Register`) para a mesma operacao.
 
-DTOs representam contratos de mecanismos externos. Um DTO HTTP pertence a
-`infra/http/dto` e pode utilizar decorators de validacao e documentacao do
-NestJS.
+## DTOs e entradas
 
-Casos de uso nao recebem DTOs da infraestrutura. O controller converte o DTO
-para um `Input` da aplicacao antes de executar o caso de uso.
-
-Exemplo:
+DTOs pertencem a `infra/http/dto` e podem usar decorators de validacao e
+documentacao. Casos de uso nunca recebem DTOs; o controller converte:
 
 ```text
-RegisterUserRequestDto -> RegisterUserInput -> RegisterUserUseCase
+<Funcionalidade>RequestDto -> <Funcionalidade>Input -> <Funcionalidade>UseCase
 ```
 
-O sufixo `Command` deve ser reservado para quando o projeto adotar
-explicitamente esse vocabulario ou um mecanismo de CQRS. Ate la, `Input` torna
-a responsabilidade do objeto mais direta.
+O DTO valida o formato da requisicao (campos obrigatorios, tipos). As regras de
+negocio de cada dado ficam nos value objects e nas entidades.
 
-## Entidades e value objects
+## Entidades
 
-Entidades possuem identidade e protegem invariantes que continuam verdadeiras
-ao longo de seu ciclo de vida.
+Entidades possuem identidade e protegem suas invariantes ao longo do ciclo de
+vida.
 
-Value objects representam conceitos definidos por seus valores e concentram
-validacoes e normalizacoes do dominio, como um endereco de e-mail. Eles devem
-ser imutaveis sempre que possivel.
+A classe da entidade **agrupa os metodos relacionados as acoes do seu
+contexto**. Por exemplo, no contexto de autenticacao, a entidade expoe metodos
+como `createAccount()` e `login()`, cada um garantindo as regras daquela acao.
 
-Decorators de persistencia, validacao HTTP ou injecao de dependencia nao devem
-ser adicionados a entidades e value objects.
+- metodos sao nomeados pela acao de negocio em camelCase (`changePassword`), e
+  nao por operacoes tecnicas (`setPassword`, `update`);
+- atributos nao sao alterados diretamente de fora da entidade;
+- a entidade nao acessa recursos externos; quando uma acao depende deles, o
+  caso de uso obtem o resultado pelo gateway e o entrega a entidade.
+
+## Value objects
+
+**Todo atributo com regra de negocio especifica da aplicacao vira um value
+object**, em `application/entities/vo`:
+
+- `Email`: formato valido, normalizacao para minusculas;
+- `Cpf`: digitos verificadores, remocao de mascara;
+- `Phone`: formato e DDD aceitos;
+- `Password`: politica de senha.
+
+Atributos sem regra propria, como um texto livre, permanecem primitivos.
+
+- value objects sao imutaveis e comparados por valor;
+- um value object invalido nunca e criado: a validacao ocorre na construcao e
+  lanca uma exception da aplicacao;
+- cada value object possui testes unitarios das suas regras.
 
 ## Gateways e adaptadores
 
-Gateways expressam capacidades externas exigidas pela aplicacao. Inicialmente,
-eles podem ser especificos de um caso de uso, como `RegisterUserGateway`.
-
-Adaptadores em `infra` implementam esses contratos. Exemplos:
+Gateways sao definidos pela aplicacao e implementados por adaptadores em
+`infra`:
 
 ```text
-RegisterUserGateway <- PrismaRegisterUserGateway
-PasswordHasherGateway <- PasswordHasherAdapter
+<Funcionalidade>Gateway <- Prisma<Funcionalidade>Gateway
+PasswordHasherGateway   <- PasswordHasherAdapter
 ```
 
-Quando casos de uso diferentes precisarem do mesmo contrato, a interface pode
-ser promovida para um contrato compartilhado do dominio. Essa promocao deve ser
-resultado de repeticao real, nao de antecipacao.
+Inicialmente, um gateway e especifico do caso de uso. Ele so e promovido a
+contrato compartilhado do dominio quando houver repeticao real entre casos de
+uso. Contratos promovidos ficam em `application/gateways`, e os casos de uso os
+importam de la, nunca da pasta de outro caso de uso.
 
 ## Tratamento de erros
 
@@ -164,7 +199,7 @@ Toda falha esperada estende `ApplicationException`
 - `code`: identificador estavel, em `UPPER_SNAKE_CASE`, que o cliente usa para
   decidir o que fazer. Nunca muda depois de publicado;
 - `kind`: a categoria da falha (`not_found`, `conflict`, `unauthenticated`,
-  `forbidden`, `invalid_input` ou `business_rule`);
+  `forbidden`, `invalid_input`, `business_rule` ou `too_many_requests`);
 - a mensagem, segura para exibir ao usuario e escrita em portugues.
 
 ```ts
@@ -193,6 +228,7 @@ para o status HTTP e responde sempre no mesmo formato:
 ```text
 not_found -> 404    conflict -> 409        unauthenticated -> 401
 forbidden -> 403    invalid_input -> 422   business_rule -> 422
+too_many_requests -> 429
 ```
 
 Regras:
@@ -208,20 +244,19 @@ Regras:
   Ao criar, o filtro passa a exigir o status correspondente em tempo de
   compilacao.
 
+## Composicao
+
+Os modulos NestJS conectam controllers, casos de uso e adaptadores concretos.
+Como casos de uso nao recebem decorators, o modulo os instancia com providers
+`useFactory`.
+
 ## Estrategia de testes
 
-O desenvolvimento segue TDD sempre que um comportamento puder ser expresso
-antes de sua implementacao:
-
-1. escrever um teste que descreva o comportamento e falhe;
-2. implementar o minimo necessario para faze-lo passar;
-3. refatorar preservando o comportamento coberto.
-
-Os testes sao distribuidos por responsabilidade:
+O desenvolvimento segue TDD: teste que falha, implementacao minima, refatoracao.
 
 - entidades e value objects: testes unitarios;
-- casos de uso: testes unitarios com gateways em memoria ou fakes;
-- adaptadores Prisma e outras integracoes: testes de integracao;
+- casos de uso: testes unitarios com gateways fakes ou em memoria;
+- adaptadores Prisma e integracoes: testes de integracao;
 - endpoints HTTP: testes end-to-end.
 
 Cada tipo tem sua suite e seu comando:
@@ -239,17 +274,8 @@ limpam os dados entre testes com `resetDatabase`
 (`test/support/test-database.ts`). A suite recusa bancos cujo nome nao termine
 em `_test`.
 
-Testes devem verificar comportamento observavel, evitando acoplamento a
-detalhes privados de implementacao.
-
-## Composicao da aplicacao
-
-Os modulos NestJS sao pontos de composicao. Eles conectam controllers, casos de
-uso, gateways e adaptadores concretos.
-
-Para preservar a independencia de `application`, casos de uso nao devem receber
-decorators do NestJS. Quando necessario, o modulo pode instancia-los por meio
-de providers com `useFactory`.
+Testes verificam comportamento observavel, nao detalhes privados de
+implementacao.
 
 ## Rotas
 
@@ -329,13 +355,3 @@ Regras:
   inject: [REGISTER_USER_GATEWAY, PASSWORD_HASHER, ID_GENERATOR, CLOCK],
 }
 ```
-
-## Evolucao arquitetural
-
-Esta arquitetura e um ponto de partida, nao uma estrutura imutavel. Mudancas
-devem ser guiadas por casos de uso implementados e problemas observados.
-
-Decisoes arquiteturais relevantes, suas alternativas e consequencias devem ser
-registradas em ADRs dentro de [`docs/adr`](docs/adr/README.md). O presente
-documento deve refletir a arquitetura vigente, enquanto os ADRs preservam o
-historico das decisoes.

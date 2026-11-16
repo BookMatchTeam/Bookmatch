@@ -2,7 +2,7 @@ import { Link } from 'react-router'
 
 import { paths } from '@/app/router/paths'
 import { buttonVariants } from '@/components/ui/button'
-import { PagePlaceholder } from '@/shared/components/page-placeholder'
+import { PagePlaceholder } from '@/components/page-placeholder'
 
 export function NotFoundPage() {
   return (

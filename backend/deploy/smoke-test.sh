@@ -46,6 +46,17 @@ MARIADB_DATABASE=bookmatch
 MARIADB_USER=bookmatch
 MARIADB_PASSWORD=smoketest-$RANDOM$RANDOM
 MARIADB_ROOT_PASSWORD=smoketest-root-$RANDOM$RANDOM
+TERMS_VERSION=1
+CORS_ORIGINS=https://bookmatch.galpao.tech
+VERIFICATION_CODE_SECRET=smoketest-$RANDOM$RANDOM-com-pelo-menos-32-caracteres
+# A verificacao SMTP falha sem derrubar a API; o /health continua independente.
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=465
+SMTP_SECURE=true
+SMTP_USER=smoke@gmail.com
+SMTP_PASSWORD=senha-de-app-do-smoke
+EMAIL_FROM_NAME=BookMatch
+EMAIL_FROM_ADDRESS=smoke@gmail.com
 EOF
 
 docker network inspect "$EDGE_NETWORK" > /dev/null 2>&1 \

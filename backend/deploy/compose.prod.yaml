@@ -47,6 +47,16 @@ services:
       DATABASE_USER: ${MARIADB_USER:?defina MARIADB_USER no .env}
       DATABASE_PASSWORD: ${MARIADB_PASSWORD:?defina MARIADB_PASSWORD no .env}
       DATABASE_NAME: ${MARIADB_DATABASE:?defina MARIADB_DATABASE no .env}
+      TERMS_VERSION: ${TERMS_VERSION:?defina TERMS_VERSION no .env}
+      CORS_ORIGINS: ${CORS_ORIGINS:?defina CORS_ORIGINS no .env}
+      VERIFICATION_CODE_SECRET: ${VERIFICATION_CODE_SECRET:?defina VERIFICATION_CODE_SECRET no .env}
+      SMTP_HOST: ${SMTP_HOST:?defina SMTP_HOST no .env}
+      SMTP_PORT: ${SMTP_PORT:?defina SMTP_PORT no .env}
+      SMTP_SECURE: ${SMTP_SECURE:?defina SMTP_SECURE no .env}
+      SMTP_USER: ${SMTP_USER:?defina SMTP_USER no .env}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:?defina SMTP_PASSWORD no .env}
+      EMAIL_FROM_NAME: ${EMAIL_FROM_NAME:?defina EMAIL_FROM_NAME no .env}
+      EMAIL_FROM_ADDRESS: ${EMAIL_FROM_ADDRESS:?defina EMAIL_FROM_ADDRESS no .env}
     # Sem "ports": a API so e alcancada pelo Caddy de borda, pela rede "edge".
     networks:
       default:

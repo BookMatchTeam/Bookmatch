@@ -1,5 +1,5 @@
 import type { RequestListener, ServerResponse } from 'node:http';
-import type { Type } from '@nestjs/common';
+import type { Type, ValueProvider } from '@nestjs/common';
 import type { NestNodeApplication } from '@nestjs/platform-node';
 import { NodeAdapter } from '@nestjs/platform-node';
 import { Test } from '@nestjs/testing';
@@ -10,6 +10,7 @@ import {
 } from 'light-my-request';
 import { AppModule } from '../../src/app.module.js';
 import { APP_CONFIG, type AppConfig } from '../../src/config/app-config.js';
+import { EmailService } from '../../src/email/email.service.js';
 import { configureApp } from '../../src/configure-app.js';
 
 export const testConfig: AppConfig = {
@@ -21,7 +22,23 @@ export const testConfig: AppConfig = {
     password: 'test',
     name: 'bookmatch',
   },
+  cors: { origins: ['http://localhost:5173', 'http://localhost:3000'] },
+  terms: { version: '1' },
+  verificationCode: { secret: 'segredo-de-teste-com-32-caracteres!' },
+  mail: {
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
+    auth: { user: 'teste@gmail.com', password: 'senha-de-app' },
+    from: '"BookMatch" <teste@gmail.com>',
+  },
 };
+
+/** Headers que o frontend envia em requisições que alteram estado. */
+export const webClientHeaders = {
+  'x-bookmatch-client': 'web',
+  origin: 'http://localhost:5173',
+} as const;
 
 const injectionResponseMethods = [
   'setTimeout',
@@ -59,21 +76,39 @@ export interface TestApp {
   request(options: InjectOptions): Promise<InjectResponse>;
 }
 
+export interface TestAppOptions {
+  /** Rotas criadas so para o teste, para exercitar comportamentos transversais. */
+  controllers?: Type[];
+  /** Substitui a configuracao de teste padrao. */
+  config?: AppConfig;
+  /** Substitui providers da aplicacao (gateways, Clock, envio de e-mail...). */
+  overrides?: ValueProvider[];
+}
+
 /**
  * Sobe a aplicacao completa (AppModule + configureApp) sem abrir porta,
- * com a configuracao de teste. Controllers extras permitem exercitar
- * comportamentos transversais em rotas criadas so para o teste.
+ * com a configuracao de teste.
  */
 export async function createTestApp(
-  options: { controllers?: Type[] } = {},
+  options: TestAppOptions = {},
 ): Promise<TestApp> {
-  const moduleFixture = await Test.createTestingModule({
+  let builder = Test.createTestingModule({
     imports: [AppModule],
     controllers: options.controllers ?? [],
   })
     .overrideProvider(APP_CONFIG)
-    .useValue(testConfig)
-    .compile();
+    .useValue(options.config ?? testConfig)
+    .overrideProvider(EmailService)
+    .useValue({
+      onModuleInit: async () => undefined,
+      send: async () => ({ messageId: 'fake-message-id' }),
+    });
+
+  for (const { provide, useValue } of options.overrides ?? []) {
+    builder = builder.overrideProvider(provide).useValue(useValue);
+  }
+
+  const moduleFixture = await builder.compile();
 
   const app = moduleFixture.createNestApplication<NestNodeApplication>(
     new NodeAdapter(),

@@ -1,6 +1,7 @@
 export const paths = {
   signIn: '/entrar',
   signUp: '/criar-conta',
+  emailVerification: '/confirmar-email',
   recoverPassword: '/recuperar-senha',
   discovery: '/descobrir',
   matches: '/matches',
