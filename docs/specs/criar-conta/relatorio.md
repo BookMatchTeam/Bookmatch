@@ -26,6 +26,194 @@ A API cria contas pendentes (`POST /api/auth/sign-up`), envia por SMTP um códig
 - **Swagger em produção:** o `CORS_ORIGINS` de produção tem só `https://bookmatch.galpao.tech`. Por isso, o "Try it out" do Swagger em `api-bookmatch.galpao.tech` recebe `403` nas rotas `POST`. Para liberar, é preciso acrescentar o próprio origin da API à lista.
 - **Mensagens:** os textos de `message` estão em `src/auth/application/exceptions`. O e-mail tem versão em texto e em HTML.
 
+## Contrato HTTP para o frontend
+
+As três rotas usam como base `${VITE_API_URL}/api`. Em desenvolvimento,
+`VITE_API_URL` é `http://localhost:3000`; em produção, é
+`https://api-bookmatch.galpao.tech`.
+
+Todas as requisições deste fluxo são `POST` e devem enviar:
+
+```http
+Content-Type: application/json
+X-BookMatch-Client: web
+```
+
+O cliente HTTP também deve usar `credentials: 'include'` e
+`cache: 'no-store'`, conforme `frontend/docs/contrato-api.md`. Este fluxo ainda
+não cria sessão nem cookie, mas a configuração deve ser comum às chamadas da
+API. Campos JSON não documentados são recusados.
+
+### Tipos compartilhados
+
+Os tipos abaixo representam o contrato da API, não o estado intermediário dos
+formulários:
+
+```ts
+export interface ApiError<TCode extends string = string> {
+  statusCode: number;
+  code: TCode;
+  message: string;
+}
+
+export interface SignUpRequest {
+  name: string;
+  email: string;
+  password: string;
+  city: string;
+  state: string;
+  acceptedTerms: true;
+}
+
+export interface SignUpResponse {
+  email: string;
+}
+
+export interface VerifyEmailRequest {
+  email: string;
+  code: string;
+}
+
+export interface ResendVerificationCodeRequest {
+  email: string;
+}
+```
+
+Toda falha da API devolve `ApiError` em JSON. O frontend deve tomar decisões
+por `code`, que é estável; `message` está em português e pode ser exibida. Não
+há `fieldErrors`. Falhas comuns às três rotas:
+
+| Status | `code` | Quando |
+|---|---|---|
+| 400 | `BAD_REQUEST` | JSON malformado |
+| 403 | `CSRF_CHECK_FAILED` | Header ausente/incorreto ou `Origin` não permitido |
+| 422 | `VALIDATION_ERROR` | Campo ausente, tipo incorreto ou campo extra |
+| 500 | `INTERNAL_ERROR` | Erro inesperado, sem detalhes internos |
+
+### Criar ou refazer cadastro
+
+`POST /api/auth/sign-up`
+
+```ts
+type SignUp = (body: SignUpRequest) => Promise<SignUpResponse>;
+```
+
+Exemplo de corpo:
+
+```json
+{
+  "name": "Ana Souza",
+  "email": "ana@exemplo.com",
+  "password": "senha1234",
+  "city": "São Paulo",
+  "state": "SP",
+  "acceptedTerms": true
+}
+```
+
+| Campo | Contrato aceito |
+|---|---|
+| `name` | `string`, de 2 a 100 caracteres após remover espaços das pontas |
+| `email` | `string`, e-mail válido, com até 254 caracteres; é normalizado para minúsculas e sem espaços nas pontas |
+| `password` | `string`, de 8 a 128 caracteres, com pelo menos uma letra e um número |
+| `city` | `string`, de 2 a 100 caracteres após remover espaços das pontas |
+| `state` | `string`, uma das 27 siglas de UF; aceita maiúsculas ou minúsculas |
+| `acceptedTerms` | booleano literal `true`; a versão dos termos não é enviada pelo cliente |
+
+Sucesso: `201 Created` com o e-mail normalizado. Esse valor deve ser levado
+para a tela de confirmação:
+
+```json
+{ "email": "ana@exemplo.com" }
+```
+
+Erros específicos:
+
+| Status | `code` | Quando |
+|---|---|---|
+| 422 | `INVALID_NAME` | `name` viola o contrato |
+| 422 | `INVALID_EMAIL` | `email` viola o contrato |
+| 422 | `INVALID_PASSWORD` | `password` viola o contrato |
+| 422 | `INVALID_CITY` | `city` viola o contrato |
+| 422 | `INVALID_STATE` | `state` não é uma UF brasileira |
+| 422 | `TERMS_NOT_ACCEPTED` | `acceptedTerms` não é `true` |
+| 409 | `EMAIL_ALREADY_REGISTERED` | O e-mail pertence a uma conta ativa |
+| 429 | `VERIFICATION_CODE_RESEND_TOO_SOON` | Cadastro pendente recebeu código há menos de 60 segundos |
+| 429 | `VERIFICATION_CODE_SEND_LIMIT_REACHED` | Cadastro pendente já recebeu 5 códigos nos últimos 60 minutos |
+
+Se o e-mail pertence a uma conta pendente, esta mesma rota substitui os dados
+anteriores e envia um código novo. Portanto, os dois erros `429` também devem
+ser tratados na tela de cadastro. Mesmo se o SMTP falhar, a API mantém o
+cadastro e responde `201`; a tela seguinte deve permitir o reenvio.
+
+### Confirmar e-mail
+
+`POST /api/auth/email-verification`
+
+```ts
+type VerifyEmail = (body: VerifyEmailRequest) => Promise<void>;
+```
+
+Exemplo de corpo:
+
+```json
+{ "email": "ana@exemplo.com", "code": "042317" }
+```
+
+| Campo | Contrato aceito |
+|---|---|
+| `email` | `string`; é normalizado para minúsculas e sem espaços nas pontas |
+| `code` | `string` com exatamente 6 dígitos; zeros à esquerda são significativos |
+
+Sucesso: `204 No Content`, sem corpo. Não execute `response.json()` nessa
+resposta. Depois do sucesso, direcione a pessoa para o login; a verificação
+não cria sessão.
+
+Erros específicos:
+
+| Status | `code` | Quando | Ação esperada na tela |
+|---|---|---|---|
+| 422 | `INVALID_VERIFICATION_CODE` | Código errado, e-mail sem cadastro ou nenhum código ativo | Manter na tela e permitir nova tentativa |
+| 422 | `VERIFICATION_CODE_EXPIRED` | Passaram 15 minutos desde o envio | Pedir novo código |
+| 422 | `VERIFICATION_CODE_ATTEMPTS_EXCEEDED` | O código chegou a 5 tentativas erradas | Pedir novo código |
+| 409 | `EMAIL_ALREADY_VERIFIED` | A conta já está ativa | Direcionar para o login |
+
+Um `code` fora do formato de seis dígitos recebe `VALIDATION_ERROR` e não
+conta como tentativa. Só o código enviado mais recentemente é aceito.
+
+### Reenviar código
+
+`POST /api/auth/email-verification/resend`
+
+```ts
+type ResendVerificationCode = (
+  body: ResendVerificationCodeRequest,
+) => Promise<void>;
+```
+
+Exemplo de corpo:
+
+```json
+{ "email": "ana@exemplo.com" }
+```
+
+O único campo é `email: string`, normalizado para minúsculas e sem espaços nas
+pontas. Sucesso: `204 No Content`, sem corpo; não execute `response.json()`.
+A API também responde `204` e não envia e-mail quando a conta não existe ou já
+está ativa, para não revelar contas cadastradas.
+
+Erros específicos:
+
+| Status | `code` | Quando |
+|---|---|---|
+| 429 | `VERIFICATION_CODE_RESEND_TOO_SOON` | Ainda não passaram 60 segundos desde o último envio |
+| 429 | `VERIFICATION_CODE_SEND_LIMIT_REACHED` | A conta recebeu 5 códigos nos últimos 60 minutos |
+
+Os limites contam em conjunto o cadastro inicial, o cadastro refeito e os
+reenvios. A API não devolve `Retry-After`; o frontend pode manter localmente o
+contador de 60 segundos para orientar a interface, mas a resposta do backend
+continua sendo a fonte de verdade.
+
 ## Critérios de aceite
 
 Unitários em `backend/src`, e2e em `backend/test`, integração em `*.int-spec.ts`.
