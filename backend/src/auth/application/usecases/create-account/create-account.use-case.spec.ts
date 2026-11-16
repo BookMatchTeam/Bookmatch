@@ -22,7 +22,7 @@ const now = new Date('2026-11-16T10:00:00.000Z');
 const validInput: CreateAccountInput = {
   name: 'Ana Souza',
   email: 'ana@exemplo.com',
-  password: 'senha1234',
+  password: 'Senha@1234',
   city: 'São Paulo',
   state: 'SP',
   acceptedTerms: true,
@@ -62,7 +62,7 @@ describe('CreateAccountUseCase', () => {
         id: 'user-1',
         name: 'Ana Souza',
         email: 'ana@exemplo.com',
-        passwordHash: 'hashed:senha1234',
+        passwordHash: 'hashed:Senha@1234',
         city: 'São Paulo',
         state: 'SP',
         status: 'PENDING_VERIFICATION',
@@ -121,16 +121,21 @@ describe('CreateAccountUseCase', () => {
 
     await useCase.execute(validInput);
 
-    expect(JSON.stringify(database.users)).not.toContain('"senha1234"');
+    expect(JSON.stringify(database.users)).not.toContain('"Senha@1234"');
   });
 
   it.each([
     ['nome curto', { name: ' A ' }, InvalidNameException],
     ['nome longo', { name: 'x'.repeat(101) }, InvalidNameException],
     ['e-mail inválido', { email: 'ana@' }, InvalidEmailException],
-    ['senha sem número', { password: 'abcdefgh' }, InvalidPasswordException],
-    ['senha sem letra', { password: '12345678' }, InvalidPasswordException],
-    ['senha curta', { password: 'a1' }, InvalidPasswordException],
+    [
+      'senha sem maiúscula',
+      { password: 'senha@1234' },
+      InvalidPasswordException,
+    ],
+    ['senha sem especial', { password: 'Senha1234' }, InvalidPasswordException],
+    ['senha sem número', { password: 'Senha@abcd' }, InvalidPasswordException],
+    ['senha curta', { password: 'Sen@1' }, InvalidPasswordException],
     ['cidade curta', { city: 'X' }, InvalidCityException],
     ['UF inexistente', { state: 'XX' }, InvalidStateException],
     ['termos não aceitos', { acceptedTerms: false }, TermsNotAcceptedException],
@@ -196,7 +201,7 @@ describe('CreateAccountUseCase', () => {
         expect.objectContaining({
           id: 'user-0',
           name: 'Ana Souza',
-          passwordHash: 'hashed:senha1234',
+          passwordHash: 'hashed:Senha@1234',
           city: 'São Paulo',
           state: 'SP',
           status: 'PENDING_VERIFICATION',

@@ -9,7 +9,7 @@ import { testConfig, webClientHeaders } from '../support/test-app.js';
 const validBody = {
   name: 'Ana Souza',
   email: 'ana@exemplo.com',
-  password: 'senha1234',
+  password: 'Senha@1234',
   city: 'São Paulo',
   state: 'SP',
   acceptedTerms: true,
@@ -66,10 +66,10 @@ describe('POST /api/auth/sign-up (e2e)', () => {
     const user = testApp.database.userByEmail('ana@exemplo.com');
 
     expect(user?.passwordHash).toMatch(/^\$argon2id\$/);
-    await expect(verify(user?.passwordHash ?? '', 'senha1234')).resolves.toBe(
+    await expect(verify(user?.passwordHash ?? '', 'Senha@1234')).resolves.toBe(
       true,
     );
-    expect(response.payload).not.toContain('senha1234');
+    expect(response.payload).not.toContain('Senha@1234');
   });
 
   it('grava o HMAC-SHA-256 do código enviado (CA-15)', async () => {
@@ -96,9 +96,27 @@ describe('POST /api/auth/sign-up (e2e)', () => {
     ['nome curto (CA-02)', { name: ' A ' }, 'INVALID_NAME'],
     ['nome longo (CA-02)', { name: 'x'.repeat(101) }, 'INVALID_NAME'],
     ['e-mail inválido (CA-04)', { email: 'ana@' }, 'INVALID_EMAIL'],
-    ['senha sem número (CA-05)', { password: 'abcdefgh' }, 'INVALID_PASSWORD'],
-    ['senha sem letra (CA-05)', { password: '12345678' }, 'INVALID_PASSWORD'],
-    ['senha curta (CA-05)', { password: 'a1' }, 'INVALID_PASSWORD'],
+    [
+      'senha sem maiúscula (CA-05)',
+      { password: 'senha@1234' },
+      'INVALID_PASSWORD',
+    ],
+    [
+      'senha sem caractere especial (CA-05)',
+      { password: 'Senha1234' },
+      'INVALID_PASSWORD',
+    ],
+    [
+      'senha sem número (CA-05)',
+      { password: 'Senha@abcd' },
+      'INVALID_PASSWORD',
+    ],
+    ['senha curta (CA-05)', { password: 'Sen@1' }, 'INVALID_PASSWORD'],
+    [
+      'senha só com espaço como especial (CA-05)',
+      { password: 'Senha 1234' },
+      'INVALID_PASSWORD',
+    ],
     ['cidade curta (CA-06)', { city: 'X' }, 'INVALID_CITY'],
     ['UF inexistente (CA-08)', { state: 'XX' }, 'INVALID_STATE'],
     [

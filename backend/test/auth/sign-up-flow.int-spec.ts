@@ -16,7 +16,7 @@ const config = validateEnvironment(process.env);
 const body = {
   name: 'Ana Souza',
   email: '  Ana@Exemplo.COM ',
-  password: 'senha1234',
+  password: 'Senha@1234',
   city: 'São Paulo',
   state: 'sp',
   acceptedTerms: true,
@@ -75,7 +75,7 @@ describe('Cadastro e verificação com banco (integração)', () => {
       status: 'PENDING_VERIFICATION',
     });
     expect(user.passwordHash).toMatch(/^\$argon2id\$/);
-    await expect(verify(user.passwordHash, 'senha1234')).resolves.toBe(true);
+    await expect(verify(user.passwordHash, 'Senha@1234')).resolves.toBe(true);
     expect(user.termsAcceptances).toEqual([
       expect.objectContaining({ termsVersion: config.terms.version }),
     ]);
